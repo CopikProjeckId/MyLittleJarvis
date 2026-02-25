@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JARVIS - Terminal</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#00D4AA">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0A0A0F;
+      --bg-secondary: #12121A;
+      --bg-terminal: #0D1117;
+      --accent-primary: #00D4AA;
+      --accent-secondary: #00B4D8;
+      --text-primary: #E2E8F0;
+      --text-secondary: #A0A0B0;
+      --text-tertiary: #6A6A80;
+      --success: #10B981;
+      --error: #EF4444;
+      --warning: #F59E0B;
+    }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* Header */
+    .header {
+      background: rgba(10, 10, 15, 0.9);
+      backdrop-filter: blur(12px);
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(0, 212, 170, 0.2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    
+    .logo-text {
+      font-weight: 700;
+      font-size: 18px;
+      font-family: 'Inter', sans-serif;
+    }
+    
+    .connection-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+    }
+    
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+    
+    .status-dot.disconnected {
+      background: var(--error);
+    }
+    
+    /* Terminal */
+    .terminal {
+      flex: 1;
+      background: var(--bg-terminal);
+      padding: 16px;
+      overflow-y: auto;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    
+    .output {
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    
+    .output .command { color: var(--accent-primary); }
+    .output .success { color: var(--success); }
+    .output .error { color: var(--error); }
+    .output .warning { color: var(--warning); }
+    .output .info { color: var(--text-secondary); }
+    .output .system { color: var(--text-tertiary); }
+    
+    /* Input Area */
+    .input-area {
+      background: var(--bg-secondary);
+      padding: 12px 16px;
+      border-top: 1px solid rgba(0, 212, 170, 0.1);
+    }
+    
+    .input-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .prompt {
+      color: var(--accent-primary);
+      font-weight: 500;
+    }
+    
+    input[type="text"] {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      outline: none;
+    }
+    
+    /* Quick Commands */
+    .quick-commands {
+      display: flex;
+      gap: 8px;
+      padding: 8px 16px;
+      background: var(--bg-secondary);
+      overflow-x: auto;
+    }
+    
+    .quick-btn {
+      background: var(--bg-tertiary);
+      border: 1px solid rgba(0, 212, 170, 0.2);
+      color: var(--text-secondary);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    
+    .quick-btn:hover {
+      background: var(--accent-primary);
+      color: var(--bg-primary);
+    }
+    
+    /* Navigation */
+    .nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(10, 10, 15, 0.95);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid rgba(0, 212, 170, 0.1);
+      display: flex;
+      justify-content: space-around;
+      padding: 12px 0;
+    }
+    
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 16px;
+      color: var(--text-tertiary);
+      text-decoration: none;
+      font-size: 12px;
+      transition: color 0.2s;
+    }
+    
+    .nav-item.active {
+      color: var(--accent-primary);
+    }
+    
+    .nav-icon {
+      font-size: 20px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="logo">
+      <div class="logo-icon">🤖</div>
+      <span class="logo-text">JARVIS Terminal</span>
+    </div>
+    <div class="connection-status">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText">Connecting...</span>
+    </div>
+  </header>
+
+  <!-- Quick Commands -->
+  <div class="quick-commands">
+    <button class="quick-btn" onclick="runCommand('status')">status</button>
+    <button class="quick-btn" onclick="runCommand('models')">models</button>
+    <button class="quick-btn" onclick="runCommand('memory')">memory</button>
+    <button class="quick-btn" onclick="runCommand('clear')">clear</button>
+    <button class="quick-btn" onclick="runCommand('help')">help</button>
+  </div>
+
+  <!-- Terminal Output -->
+  <main class="terminal" id="terminal">
+    <div class="output" id="output">
+      <span class="system">JARVIS Terminal v1.0.0</span>
+      <span class="system">Type 'help' for available commands</span>
+      <span class="system">─────────────────────────────────────</span>
+    </div>
+  </main>
+
+  <!-- Input Area -->
+  <div class="input-area">
+    <div class="input-line">
+      <span class="prompt">jarvis@term $</span>
+      <input type="text" id="commandInput" placeholder="명령어를 입력하세요..." autocomplete="off" autofocus>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <a href="chat.html" class="nav-item">
+      <span class="nav-icon">💬</span>
+      <span>Chat</span>
+    </a>
+    <a href="terminal.html" class="nav-item active">
+      <span class="nav-icon">💻</span>
+      <span>Terminal</span>
+    </a>
+    <a href="dashboard.html" class="nav-item">
+      <span class="nav-icon">📊</span>
+      <span>Dashboard</span>
+    </a>
+  </nav>
+
+  <script>
+    const terminal = document.getElementById('terminal');
+    const output = document.getElementById('output');
+    const commandInput = document.getElementById('commandInput');
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+    
+    // Connect status
+    setTimeout(() => {
+      statusDot.classList.remove('disconnected');
+      statusText.textContent = 'Connected';
+      print('info', 'Connected to JARVIS');
+    }, 1000);
+    
+    // Enter key
+    commandInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        const cmd = commandInput.value.trim();
+        if (cmd) runCommand(cmd);
+        commandInput.value = '';
+      }
+    });
+    
+    function print(type, text) {
+      const line = document.createElement('div');
+      line.innerHTML = `<span class="${type}">${text}</span>`;
+      output.appendChild(line);
+      terminal.scrollTop = terminal.scrollHeight;
+    }
+    
+    function runCommand(cmd) {
+      print('command', `$ ${cmd}`);
+      
+      // Simulate command response
+      const responses = {
+        'help': `Available commands:
+  status    - Show system status
+  models    - List available models
+  memory    - Show memory usage
+  clear     - Clear terminal
+  chat      - Switch to chat mode
+  dashboard - Switch to dashboard
+  restart   - Restart JARVIS
+  stop      - Stop JARVIS`,
+        'status': `System Status:
+  Version: 1.0.0
+  Model: qwen3.5 (Cloud)
+  Memory: 128MB / 512MB
+  Uptime: 00:15:32
+  Status: Online`,
+        'models': `Available Models:
+  • qwen3.5 (Cloud) - Primary
+  • qwen2.5:1.5b (Local) - Fallback
+  • phi3:mini (Local) - Backup`,
+        'memory': `Memory Usage:
+  RAM: 128MB / 512MB (25%)
+  Cache: 45MB
+  Context: 2,450 tokens`,
+        'clear': 'cleared',
+        'chat': 'Switching to chat mode...',
+        'dashboard': 'Switching to dashboard...',
+        'restart': 'Restarting JARVIS...',
+        'stop': 'Stopping JARVIS...',
+      };
+      
+      setTimeout(() => {
+        if (responses[cmd]) {
+          if (cmd === 'clear') {
+            output.innerHTML = '';
+          } else {
+            print('success', responses[cmd]);
+          }
+        } else {
+          print('error', `Command not found: ${cmd}`);
+        }
+      }, 300);
+    }
+  </script>
+</body>
+</html>

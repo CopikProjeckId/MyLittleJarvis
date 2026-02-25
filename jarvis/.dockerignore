@@ -1,0 +1,43 @@
+# Dependencies
+node_modules
+npm-debug.log
+
+# Logs
+logs
+*.log
+
+# Data
+data
+*.db
+*.sqlite
+
+# Environment
+.env
+.env.local
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Test
+coverage
+.nyc_output
+
+# Build
+dist
+build
+
+# Docs
+*.md
+!README.md
+
+# Temp
+tmp
+temp
+*.tmp

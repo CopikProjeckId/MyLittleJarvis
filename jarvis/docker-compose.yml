@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  jarvis:
+    build: .
+    container_name: jarvis-2flow
+    restart: unless-stopped
+    ports:
+      - "18789:18789"
+    environment:
+      - NODE_ENV=production
+      - PORT=18789
+      - LOG_LEVEL=info
+      - TZ=UTC
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./config:/app/config
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:18789/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - jarvis-network
+
+  # Optional: Ollama for local LLM
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: jarvis-ollama
+  #   restart: unless-stopped
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama-data:/root/.ollama
+  #   networks:
+  #     - jarvis-network
+
+networks:
+  jarvis-network:
+    driver: bridge
+
+volumes:
+  ollama-data:

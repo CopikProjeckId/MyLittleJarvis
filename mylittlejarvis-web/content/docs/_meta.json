@@ -1,0 +1,55 @@
+{
+  "title": "JARVIS 2-Flow Docs",
+  "description": "OpenClaw-level AI assistant documentation",
+  "sections": [
+    {
+      "title": "Getting Started",
+      "description": "Learn the basics of JARVIS 2-Flow",
+      "icon": "🚀",
+      "defaultOpen": true,
+      "slug": "getting-started",
+      "pages": [
+        "index",
+        "installation",
+        "quickstart",
+        "configuration"
+      ]
+    },
+    {
+      "title": "Reference",
+      "description": "API and CLI reference documentation",
+      "icon": "⚡",
+      "defaultOpen": false,
+      "slug": "reference",
+      "pages": [
+        "core-systems",
+        "api",
+        "cli-commands"
+      ]
+    },
+    {
+      "title": "Examples",
+      "description": "Real-world use cases and workflows",
+      "icon": "💡",
+      "defaultOpen": false,
+      "slug": "examples",
+      "pages": [
+        "index",
+        "coding-assistant",
+        "task-automation"
+      ]
+    },
+    {
+      "title": "Advanced",
+      "description": "Deep dive into advanced features",
+      "icon": "🔧",
+      "defaultOpen": false,
+      "slug": "advanced",
+      "pages": [
+        "custom-models",
+        "plugins",
+        "self-hosting"
+      ]
+    }
+  ]
+}

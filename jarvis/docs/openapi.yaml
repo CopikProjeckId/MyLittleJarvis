@@ -1,0 +1,230 @@
+openapi: 3.0.3
+
+info:
+  title: JARVIS 2-Flow API
+  description: |
+    OpenClaw-level AI assistant API with LLM Engine, Neural Memory, and Tool Executor.
+    
+    ## Features
+    - **LLM Engine**: Multi-provider (Ollama, OpenAI, Claude)
+    - **Memory**: Vector store + Hybrid search
+    - **Tools**: Schema validation, retry, timeout
+    - **Gateway**: REST API + WebSocket
+  version: 2.0.0
+  contact:
+    name: JARVIS 2-Flow Team
+
+servers:
+  - url: http://localhost:18789
+    description: Local development
+  - url: https://jarvis.example.com
+    description: Production server
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Returns the health status of the service
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: number
+                  uptime:
+                    type: number
+
+  /api/status:
+    get:
+      summary: Get system status
+      description: Returns current status of all JARVIS components
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: System status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  running:
+                    type: boolean
+                  uptime:
+                    type: number
+                  memory:
+                    type: object
+                  tools:
+                    type: number
+                  gateway:
+                    type: object
+
+  /api/chat:
+    post:
+      summary: Chat with JARVIS
+      description: Send a message and get AI response
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - message
+              properties:
+                message:
+                  type: string
+                  description: User message
+                session:
+                  type: string
+                  description: Session ID (optional)
+      responses:
+        '200':
+          description: AI response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  response:
+                    type: string
+                  session:
+                    type: string
+                  provider:
+                    type: string
+
+  /api/memory/search:
+    get:
+      summary: Search memory
+      description: Search through stored memories
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Search query
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+
+  /api/memory:
+    post:
+      summary: Store memory
+      description: Store a new memory
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - content
+              properties:
+                content:
+                  type: string
+                metadata:
+                  type: object
+      responses:
+        '200':
+          description: Memory stored
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  success:
+                    type: boolean
+
+  /api/tools:
+    get:
+      summary: List tools
+      description: Get list of available tools
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of tools
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tools:
+                    type: array
+                    items:
+                      type: object
+
+  /api/tools/execute:
+    post:
+      summary: Execute tool
+      description: Execute a specific tool
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tool
+              properties:
+                tool:
+                  type: string
+                params:
+                  type: object
+      responses:
+        '200':
+          description: Tool execution result
+          content:
+            application/json:
+              schema:
+                type: object
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Password or API key
+
+tags:
+  - name: System
+    description: System endpoints
+  - name: Chat
+    description: Chat API
+  - name: Memory
+    description: Memory management
+  - name: Tools
+    description: Tool execution

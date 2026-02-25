@@ -1,0 +1,53 @@
+{
+  "name": "jarvis-cli",
+  "version": "1.0.0",
+  "description": "JARVIS CLI Configuration",
+  "agent": {
+    "model": "qwen3.5",
+    "maxTokens": 4096,
+    "maxContextSize": 20
+  },
+  "gateway": {
+    "port": 18789,
+    "bind": "127.0.0.1",
+    "auth": {
+      "enabled": true,
+      "password": ""
+    }
+  },
+  "memory": {
+    "storage": "./data/memory",
+    "maxDocuments": 1000
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "polling": true
+    },
+    "cli": {
+      "enabled": true
+    }
+  },
+  "tools": {
+    "web-search": {
+      "enabled": true
+    },
+    "web-fetch": {
+      "enabled": true
+    },
+    "exec": {
+      "enabled": true,
+      "timeout": 60000
+    },
+    "memory": {
+      "enabled": true
+    },
+    "message": {
+      "enabled": true
+    }
+  },
+  "models": {
+    "primary": "qwen3.5",
+    "fallback": ["qwen2.5:1.5b", "phi3:mini"]
+  }
+}

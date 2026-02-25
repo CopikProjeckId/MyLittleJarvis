@@ -1,0 +1,35 @@
+{
+  "name": "jarvis-cli",
+  "version": "2.0.0",
+  "description": "JARVIS CLI - OpenClaw-Level AI Assistant",
+  "main": "cli.js",
+  "type": "module",
+  "scripts": {
+    "start": "node cli.js",
+    "cli": "node cli.js",
+    "telegram": "node src/telegram/bot.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:watch": "npm test -- --watch",
+    "lint": "echo 'Linting...'",
+    "lint:fix": "echo 'Fixing...'",
+    "docker:build": "docker build -t jarvis-cli .",
+    "docker:run": "docker run -p 18789:18789 jarvis-cli",
+    "docker:compose": "docker-compose up -d"
+  },
+  "dependencies": {
+    "@slack/bolt": "^3.17.0",
+    "discord.js": "^14.14.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "grammy": "^1.19.0",
+    "readline-sync": "^1.4.10",
+    "uuid": "^9.0.1",
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

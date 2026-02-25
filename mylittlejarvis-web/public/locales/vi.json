@@ -1,0 +1,72 @@
+{
+  "nav": {
+    "features":   "Tính năng",
+    "terminal":   "Terminal",
+    "install":    "Cài đặt",
+    "docs":       "Tài liệu",
+    "about":      "Giới thiệu",
+    "faq":        "FAQ",
+    "blog":       "Blog",
+    "getStarted": "Bắt đầu",
+    "getStartedFree": "Bắt đầu miễn phí"
+  },
+  "hero": {
+    "badge1":    "Chạy trên Claude AI",
+    "badge2":    "Dùng điện thoại cũ",
+    "badge3":    "Cài đặt 3 phút",
+    "headline1": "Điện thoại cũ của bạn",
+    "headline2": "Trở thành",
+    "headline3": "JARVIS",
+    "subtitle":  "Biến bất kỳ thiết bị Android cũ thành trung tâm AI 24/7. Trí tuệ Claude Code mức <strong>15% chi phí.</strong> AI cá nhân của bạn, sống trong vài phút.",
+    "cta1":      "Bắt đầu miễn phí",
+    "cta2":      "Xem cách hoạt động",
+    "scrollHint": "cuộn để khám phá",
+    "chatPlaceholder": "Hỏi JARVIS bất kỳ điều gì...",
+    "chatUser": "Bạn",
+    "chatAgent": "JARVIS",
+    "chatSample": "Nhắc tôi về cuộc họp 3 giờ chiều và tóm tắt tài liệu tôi đã gửi",
+    "chatReply": "Đã rõ! Đã đặt nhắc nhở lúc 3:00 chiều. Tôi đã phân tích 3 tài liệu — đây là thông tin chính: dự báo Q4 cho thấy tăng trưởng 34%. Bạn muốn tôi chuẩn bị điểm trình bày không?",
+    "statCpu": "CPU",
+    "statMemory": "Bộ nhớ",
+    "statTasks": "Tác vụ",
+    "statTasksValue": "3 đang chạy",
+    "online": "JARVIS TRỰC TUYẾN",
+    "conversation": "CUỘC TRÒ CHUYỆN",
+    "justNow": "vừa xong"
+  },
+  "features": {
+    "title": "Mọi thứ bạn cần",
+    "subtitle": "Tính năng mạnh mẽ cho năng suất thực"
+  },
+  "footer": {
+    "description": "Biến điện thoại cũ thành trợ lý AI cá nhân. Lập trình Claude Code chỉ 15% chi phí.",
+    "statsUsers":    "Người dùng hoạt động",
+    "statsInstalls": "Đã cài đặt",
+    "statsPersonas": "Persona được chia sẻ",
+    "sectionProduct":   "Sản phẩm",
+    "sectionCommunity": "Cộng đồng",
+    "sectionCompany":   "Công ty",
+    "linkFeatures":     "Tính năng",
+    "linkInstallation": "Cài đặt",
+    "linkDocs":         "Tài liệu",
+    "linkGithub":       "GitHub",
+    "linkDiscord":      "Discord",
+    "linkTwitter":      "Twitter",
+    "linkYoutube":      "YouTube",
+    "linkBlog":         "Blog",
+    "linkAbout":        "Giới thiệu",
+    "linkContact":      "Liên hệ",
+    "linkPrivacy":      "Bảo mật",
+    "linkTerms":        "Điều khoản",
+    "copyright":        "© 2026 MyLittleJarvis. Mã nguồn mở MIT License.",
+    "madeWith":         "Được tạo bởi",
+    "byComm":           "cộng đồng"
+  },
+  "lang": {
+    "select": "Ngôn ngữ",
+    "en": "English",
+    "ko": "한국어",
+    "vi": "Tiếng Việt",
+    "tl": "Filipino"
+  }
+}

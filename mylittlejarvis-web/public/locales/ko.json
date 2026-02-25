@@ -1,0 +1,72 @@
+{
+  "nav": {
+    "features":   "기능",
+    "terminal":   "터미널",
+    "install":    "설치",
+    "docs":       "문서",
+    "about":      "소개",
+    "faq":        "FAQ",
+    "blog":       "블로그",
+    "getStarted": "시작하기",
+    "getStartedFree": "무료로 시작하기"
+  },
+  "hero": {
+    "badge1":    "Claude AI 탑재",
+    "badge2":    "오래된 폰 활용",
+    "badge3":    "3분 설치",
+    "headline1": "당신의 오래된 폰이",
+    "headline2": "당신만의",
+    "headline3": "JARVIS",
+    "subtitle":  "오래된 안드로이드 기기를 24시간 AI 파워하우스로 변신시키세요. Claude Code 수준의 지능을 <strong>비용의 15%</strong>로. 나만의 AI 페르소나, 몇 분 안에 완성.",
+    "cta1":      "무료로 시작하기",
+    "cta2":      "작동 방식 보기",
+    "scrollHint": "스크롤하여 탐색",
+    "chatPlaceholder": "JARVIS에게 무엇이든 물어보세요...",
+    "chatUser": "나",
+    "chatAgent": "JARVIS",
+    "chatSample": "오후 3시 미팅 알림 설정하고 보낸 문서 요약해줘",
+    "chatReply": "알겠습니다! 오후 3:00 알림 설정 완료. 문서 3개를 분석했습니다 — 핵심: 4분기 예측치가 34% 성장을 보여줍니다. 발표 자료를 준비해드릴까요?",
+    "statCpu": "CPU",
+    "statMemory": "메모리",
+    "statTasks": "작업",
+    "statTasksValue": "3개 활성",
+    "online": "JARVIS 온라인",
+    "conversation": "대화",
+    "justNow": "방금 전"
+  },
+  "features": {
+    "title": "필요한 모든 것",
+    "subtitle": "실제 생산성을 위한 강력한 기능들"
+  },
+  "footer": {
+    "description": "오래된 스마트폰을 AI 개인 비서로 변환하세요. 비용의 15%로 Claude Code 수준 코딩.",
+    "statsUsers":    "활성 사용자",
+    "statsInstalls": "설치 완료",
+    "statsPersonas": "공유된 페르소나",
+    "sectionProduct":   "제품",
+    "sectionCommunity": "커뮤니티",
+    "sectionCompany":   "회사",
+    "linkFeatures":     "기능",
+    "linkInstallation": "설치",
+    "linkDocs":         "문서",
+    "linkGithub":       "GitHub",
+    "linkDiscord":      "Discord",
+    "linkTwitter":      "Twitter",
+    "linkYoutube":      "YouTube",
+    "linkBlog":         "블로그",
+    "linkAbout":        "소개",
+    "linkContact":      "연락처",
+    "linkPrivacy":      "개인정보처리방침",
+    "linkTerms":        "이용약관",
+    "copyright":        "© 2026 MyLittleJarvis. MIT 라이선스 오픈소스.",
+    "madeWith":         "커뮤니티가",
+    "byComm":           "만든 서비스"
+  },
+  "lang": {
+    "select": "언어",
+    "en": "English",
+    "ko": "한국어",
+    "vi": "Tiếng Việt",
+    "tl": "Filipino"
+  }
+}
