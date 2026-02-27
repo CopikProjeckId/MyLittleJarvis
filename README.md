@@ -1,40 +1,129 @@
-# JARVIS
+# MyLittle JARVIS
 
 ```
-     ██╗ █████╗ ██████╗ ██╗   ██╗██╗███████╗
-     ██║██╔══██╗██╔══██╗██║   ██║██║██╔════╝
-     ██║███████║██████╔╝██║   ██║██║███████╗
-██   ██║██╔══██║██╔══██╗╚██╗ ██╔╝██║╚════██║
-╚█████╔╝██║  ██║██║  ██║ ╚████╔╝ ██║███████║
- ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝  ╚═══╝  ╚═╝╚══════╝
+███╗   ███╗██╗   ██╗    ██╗     ██╗████████╗████████╗██╗     ███████╗
+████╗ ████║╚██╗ ██╔╝    ██║     ██║╚══██╔══╝╚══██╔══╝██║     ██╔════╝
+██╔████╔██║ ╚████╔╝     ██║     ██║   ██║      ██║   ██║     █████╗
+██║╚██╔╝██║  ╚██╔╝      ██║     ██║   ██║      ██║   ██║     ██╔══╝
+██║ ╚═╝ ██║   ██║       ███████╗██║   ██║      ██║   ███████╗███████╗
+╚═╝     ╚═╝   ╚═╝       ╚══════╝╚═╝   ╚═╝      ╚═╝   ╚══════╝╚══════╝
+         ██╗ █████╗ ██████╗ ██╗   ██╗██╗███████╗
+         ██║██╔══██╗██╔══██╗██║   ██║██║██╔════╝
+         ██║███████║██████╔╝██║   ██║██║███████╗
+    ██   ██║██╔══██║██╔══██╗╚██╗ ██╔╝██║╚════██║
+    ╚█████╔╝██║  ██║██║  ██║ ╚████╔╝ ██║███████║
+     ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝  ╚═══╝  ╚═╝╚══════╝
 ```
 
-**Personal AI Assistant** — 85개 도구, 3-Agent 시스템, 장기 기억, Local-First
+**Personal AI Assistant** — 88개 도구, 3-Agent 시스템, 장기 기억, Local-First
 
-[![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
-[![Ollama](https://img.shields.io/badge/Ollama-Local_LLM-000000?logo=ollama&logoColor=white)](https://ollama.ai/)
-[![License](https://img.shields.io/badge/License-Custom-blue)](LICENSE)
+[![npm](https://img.shields.io/npm/v/mylittle-jarvis?style=for-the-badge&logo=npm&logoColor=white&label=npm&color=CB3837)](https://www.npmjs.com/package/mylittle-jarvis)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Ollama](https://img.shields.io/badge/Ollama-Local_LLM-000000?style=for-the-badge&logo=ollama&logoColor=white)](https://ollama.ai/)
+[![License](https://img.shields.io/badge/License-Custom-blue?style=for-the-badge)](LICENSE)
 
 ---
 
-## Quick Install
+## Install
 
 ```bash
-# One-liner install
-npm install -g mylittle-jarvis && jarvis --setup
+npm install -g mylittle-jarvis
 ```
 
-또는:
+설치 후 바로 실행:
 
 ```bash
-# Clone & Run
-git clone https://github.com/CopikProjeckId/jarvis-2flow.git
-cd jarvis-2flow/jarvis && npm install && node cli.js --setup
+jarvis --setup   # 첫 실행: 설정 마법사
+jarvis           # 이후: 바로 시작
 ```
+
+```
+$ jarvis --setup
+
+╔═══════════════════════════════════════════════════════════════╗
+║                 MyLittle JARVIS Setup Wizard                   ║
+╠═══════════════════════════════════════════════════════════════╣
+║                                                                 ║
+║  🌐 Language / 언어                                            ║
+║  > 한국어                                                      ║
+║                                                                 ║
+║  📡 Checking Ollama...                                          ║
+║  ✅ Ollama connected (localhost:11434)                           ║
+║  ✅ Models: qwen3:1.7b, qwen3:8b                                ║
+║                                                                 ║
+║  🔑 Claude API Key (optional, Enter to skip)                    ║
+║  > sk-ant-***                                                    ║
+║                                                                 ║
+║  📱 Telegram Bot Token (optional, Enter to skip)                 ║
+║  > ***                                                           ║
+║                                                                 ║
+║  🔒 Gateway Auth Token                                          ║
+║  > (auto-generated: a7f3...)                                     ║
+║                                                                 ║
+║  ✅ Config saved to ~/.jarvis/jarvis.json                        ║
+║                                                                 ║
+╚═══════════════════════════════════════════════════════════════╝
+
+$ jarvis
+
+╔═══════════════════════════════════════════════════════════════════╗
+║                                                                   ║
+║   ███╗   ███╗██╗   ██╗    ██╗     ██╗████████╗████████╗██╗        ║
+║   ████╗ ████║╚██╗ ██╔╝    ██║     ██║╚══██╔══╝╚══██╔══╝██║        ║
+║   ██╔████╔██║ ╚████╔╝     ██║     ██║   ██║      ██║   ██║        ║
+║   ██║╚██╔╝██║  ╚██╔╝      ██║     ██║   ██║      ██║   ██║        ║
+║   ██║ ╚═╝ ██║   ██║       ███████╗██║   ██║      ██║   ███████╗   ║
+║   ╚═╝     ╚═╝   ╚═╝       ╚══════╝╚═╝   ╚═╝      ╚═╝   ╚══════╝   ║
+║            ╦╔═╗╦═╗╦  ╦╦╔═╗  🤖 v2.0.0                              ║
+║            ║╠═╣╠╦╝╚╗╔╝║╚═╗  3-Agent AI Assistant                  ║
+║           ╚╝╩ ╩╩╚═ ╚╝ ╩╚═╝  Ollama + Claude                       ║
+║                                                                   ║
+╚═══════════════════════════════════════════════════════════════════╝
+
+  ✅ Ollama: qwen3:1.7b, qwen3:8b
+  ✅ Claude: configured
+  ✅ Gateway: :18789
+  ✅ Telegram: connected
+  ──────────────────────────────────────────────
+  Type /help for commands.
+  ──────────────────────────────────────────────
+
+🎯 안녕!
+🤖 안녕하세요! MyLittle JARVIS입니다. 무엇을 도와드릴까요?
+
+🎯 서울 날씨 어때?
+🔧 [weather] 호출 중...
+🤖 🌡️ 서울 날씨:
+   온도: 18°C (체감 16°C)
+   상태: 맑음
+   습도: 45%
+
+🎯 이 프로젝트 구조 분석해줘
+🔧 [search-structure] 호출 중...
+🤖 프로젝트 분석 결과:
+   📁 src/
+   ├── core/           # 핵심 시스템
+   │   ├── jarvis-3agent.js
+   │   ├── tool/       # 88개 도구
+   │   └── security/   # 보안
+   ├── gateway/        # REST + WebSocket
+   └── telegram/       # 봇
+
+🎯 /status
+╔════════════════════════════════════════════╗
+║  Orchestrator : qwen3:1.7b     ✅ Online  ║
+║  Assistant    : qwen3:8b       ✅ Online  ║
+║  Claude       : configured     ✅ Ready   ║
+║  Tools        : 88             ✅ Loaded  ║
+║  Memory       : 142 entries    ✅ Active  ║
+╚════════════════════════════════════════════╝
+```
+
+> **npm**: [npmjs.com/package/mylittle-jarvis](https://www.npmjs.com/package/mylittle-jarvis) | **GitHub**: [CopikProjeckId/jarvis-2flow](https://github.com/CopikProjeckId/jarvis-2flow)
 
 ---
 
-## Why JARVIS?
+## Why MyLittle JARVIS?
 
 <table>
 <tr>
@@ -51,7 +140,7 @@ cd jarvis-2flow/jarvis && npm install && node cli.js --setup
 ┌─────────────────────────────────────┐
 │         Hybrid Architecture         │
 │                                     │
-│  [User] ←→ [JARVIS]                │
+│  [User] ←→ [MyLittle JARVIS]       │
 │              │                      │
 │       ┌──────┴──────┐               │
 │       ▼             ▼               │
@@ -152,18 +241,18 @@ cd jarvis-2flow/jarvis && npm install && node cli.js --setup
 }
 ```
 
-### 85 Tools
+### 88 Tools
 
 | Category | Count | Description |
 |----------|-------|-------------|
 | **File** | 8 | read, write, edit, glob, grep, undo, redo, history |
 | **Code** | 3 | bash, python, node-exec |
 | **Git** | 8 | status, diff, log, commit, branch, stash, add, reset |
-| **Browser** | 10 | Playwright 자동화 (navigate, click, screenshot...) |
-| **Media** | 10 | 이미지/PDF/오디오 처리 |
+| **Browser** | 11 | Playwright 자동화 (navigate, click, screenshot...) |
+| **Media** | 11 | 이미지/PDF/오디오 처리 |
 | **Utility** | 14 | calc, datetime, json, hash, http... |
 | **Search** | 5 | 코드베이스 검색, 정의/참조 찾기 |
-| **Context** | 12 | 대화 컨텍스트, 메모리, 태스크 관리 |
+| **Context** | 13 | 대화 컨텍스트, 메모리, 태스크 관리 |
 | **Memory** | 15 | NMT 장기 기억 시스템 |
 
 ### Multi-Channel
@@ -179,74 +268,11 @@ cd jarvis-2flow/jarvis && npm install && node cli.js --setup
 
 ---
 
-## CLI Demo
+## CLI Commands
 
 ```
-╔═══════════════════════════════════════════════════════════════╗
-║     ██╗ █████╗ ██████╗ ██╗   ██╗██╗███████╗                   ║
-║     ██║██╔══██╗██╔══██╗██║   ██║██║██╔════╝                   ║
-║     ██║███████║██████╔╝██║   ██║██║███████╗                   ║
-║██   ██║██╔══██║██╔══██╗╚██╗ ██╔╝██║╚════██║                   ║
-║╚█████╔╝██║  ██║██║  ██║ ╚████╔╝ ██║███████║                   ║
-║ ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝  ╚═══╝  ╚═╝╚══════╝                   ║
-║                                                                ║
-║  v2.0.0 | 85 Tools | 3-Agent System                           ║
-╚═══════════════════════════════════════════════════════════════╝
-
-🤖 JARVIS ready. Type /help for commands.
-   Ollama: qwen3:1.7b, qwen3:8b
-   Channels: telegram, discord
-
-you> 안녕!
-
-🤖 안녕하세요! 무엇을 도와드릴까요?
-
-you> 서울 날씨 어때?
-
-🔧 [weather] 도구 호출 중...
-🤖 서울 현재 기온 18°C, 맑음입니다.
-   오늘 최고 22°C, 최저 12°C 예상됩니다.
-
-you> 이 프로젝트의 구조 분석해줘
-
-🔧 [search-structure] 도구 호출 중...
-🤖 프로젝트 분석 결과:
-
-   📁 src/
-   ├── core/           # 핵심 시스템
-   │   ├── jarvis-3agent.js
-   │   ├── tool/       # 85개 도구
-   │   └── security/   # 보안
-   ├── gateway/        # REST + WebSocket
-   └── telegram/       # 봇
-
-   총 15개 모듈, 85개 도구, 3-Agent 아키텍처
-
-you> /status
-
-╔════════════════════════════════════════════╗
-║  📊 JARVIS Status                          ║
-╠════════════════════════════════════════════╣
-║  Orchestrator : qwen3:1.7b     ✅ Online  ║
-║  Assistant    : qwen3:8b       ✅ Online  ║
-║  Claude       : configured     ✅ Ready   ║
-║  Tools        : 85             ✅ Loaded  ║
-║  Memory       : 142 entries    ✅ Active  ║
-║  Gateway      : :18789         ✅ Running ║
-╚════════════════════════════════════════════╝
-
-you> /memory 지난주 회의
-
-🔍 메모리 검색: "지난주 회의"
-
-   [1] 2024-02-20 - 팀 미팅: API 리팩토링 논의
-   [2] 2024-02-21 - 디자인 리뷰: 새 UI 컴포넌트
-   [3] 2024-02-22 - 코드 리뷰: PR #142 승인
-
-you> /help
-
 ╔════════════════════════════════════════════════════════════╗
-║  📚 JARVIS Commands                                        ║
+║  📚 MyLittle JARVIS Commands                               ║
 ╠════════════════════════════════════════════════════════════╣
 ║                                                              ║
 ║  /help, /h        도움말                                     ║
@@ -276,8 +302,9 @@ you> /help
 ├────────────────────────────────────────────────────────────┤
 │                                                              │
 │  ┌──────────┐    ┌──────────┐                               │
-│  │   You    │───▶│  JARVIS  │                               │
-│  └──────────┘    └────┬─────┘                               │
+│  │   You    │───▶│ MyLittle │                               │
+│  └──────────┘    │  JARVIS  │                               │
+│                  └────┬─────┘                               │
 │                       │                                      │
 │            ┌──────────┴──────────┐                          │
 │            ▼                     ▼                          │
@@ -323,7 +350,7 @@ you> /help
 
 ### What is NMT?
 
-**Neuron Merkle Tree (NMT)**는 JARVIS의 장기 기억 시스템입니다:
+**Neuron Merkle Tree (NMT)**는 MyLittle JARVIS의 장기 기억 시스템입니다:
 
 | Feature | Description |
 |---------|-------------|
@@ -394,13 +421,13 @@ npm install && npm run compile && npm run package
 
 ---
 
-## Security: JARVIS Architecture
+## Security: MyLittle JARVIS Architecture
 
 ### Local-First Design
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
-│                     JARVIS 보안 아키텍처                        │
+│               MyLittle JARVIS 보안 아키텍처                     │
 ├────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  ┌──────────┐       ┌──────────────┐                           │
@@ -440,63 +467,50 @@ npm install && npm run compile && npm run package
 
 ---
 
-## Quick Start (Detailed)
+## Installation (Detailed)
 
-### 1. Prerequisites
+### Prerequisites
+
+| 필수 | 설치 |
+|------|------|
+| **Node.js 18+** | [nodejs.org](https://nodejs.org/) |
+| **Ollama** | [ollama.ai](https://ollama.ai/) |
 
 ```bash
-# Node.js 18+
-node --version  # v18.0.0+
-
-# Ollama
-curl -fsSL https://ollama.ai/install.sh | sh
-ollama serve  # 백그라운드에서 실행
+# Ollama 설치 후 모델 다운로드
+ollama pull qwen3:1.7b
+ollama pull qwen3:8b
 ```
 
-### 2. Install
+### npm (권장)
 
 ```bash
-# Option A: npm global
 npm install -g mylittle-jarvis
+jarvis --setup
+jarvis
+```
 
-# Option B: Clone
+### Clone (개발용)
+
+```bash
 git clone https://github.com/CopikProjeckId/jarvis-2flow.git
 cd jarvis-2flow/jarvis
 npm install
-```
-
-### 3. Setup
-
-```bash
-jarvis --setup
-# 또는
 node cli.js --setup
-```
-
-설정 마법사가 안내합니다:
-- Ollama 연결 확인
-- 모델 다운로드 (qwen3:1.7b, qwen3:8b)
-- Claude API 설정 (선택)
-- 채널 설정 (Telegram/Discord/Slack)
-- Gateway 설정
-
-### 4. Run
-
-```bash
-jarvis
-# 또는
 node cli.js
 ```
 
-### 5. Optional: Channels
+### Docker
 
 ```bash
-# Telegram 봇 토큰 설정 후 자동 연결
-# Discord 봇 토큰 설정 후 자동 연결
-# Slack 앱 토큰 설정 후 자동 연결
+docker build -t mylittle-jarvis -f docker/Dockerfile .
+docker run -d -p 18789:18789 -v ~/.jarvis:/home/node/.jarvis mylittle-jarvis
+```
 
-# 연결된 채널 확인
-jarvis> /channels
+### Termux (Android)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/CopikProjeckId/jarvis-2flow/main/jarvis/scripts/termux-oneliner.sh | bash
 ```
 
 ---
@@ -555,7 +569,7 @@ jarvis/
 ├── src/
 │   ├── core/
 │   │   ├── jarvis-3agent.js  # 3-Agent 시스템
-│   │   ├── tool/tools/       # 85개 도구
+│   │   ├── tool/tools/       # 88개 도구
 │   │   ├── memory/           # NMT 장기 기억
 │   │   └── security/         # 보안
 │   ├── gateway/              # REST + WebSocket
@@ -571,7 +585,7 @@ jarvis/
 
 ## Contributing
 
-JARVIS는 커뮤니티의 기여로 성장합니다. 모든 형태의 기여를 환영합니다!
+MyLittle JARVIS는 커뮤니티의 기여로 성장합니다. 모든 형태의 기여를 환영합니다!
 
 ### How to Contribute
 
@@ -600,7 +614,7 @@ git push origin feature/your-feature
 
 | 영역 | 설명 | 난이도 |
 |------|------|--------|
-| **New Tools** | 85개 도구에 새 도구 추가 | ★★☆ |
+| **New Tools** | 88개 도구에 새 도구 추가 | ★★☆ |
 | **Channel Adapters** | 새 메신저 채널 연동 (Line, KakaoTalk...) | ★★☆ |
 | **i18n** | 새 언어 번역 추가 (`src/i18n/locales/`) | ★☆☆ |
 | **Bug Fix** | 이슈 수정 | ★☆☆ |

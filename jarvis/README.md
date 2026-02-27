@@ -12,13 +12,13 @@
 ██   ██║██╔══██║██╔══██╗╚██╗ ██╔╝██║╚════██║
 ╚█████╔╝██║  ██║██║  ██║ ╚████╔╝ ██║███████║
  ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝  ╚═══╝  ╚═╝╚══════╝
-         v2.0.0 | 85 Tools | 3-Agent System
+         v2.0.0 | 88 Tools | 3-Agent System
 ```
 
 </h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/tools-85-brightgreen?style=for-the-badge" alt="Tools"/>
+  <img src="https://img.shields.io/badge/tools-88-brightgreen?style=for-the-badge" alt="Tools"/>
   <img src="https://img.shields.io/badge/node-18%2B-blue?style=for-the-badge" alt="Node"/>
   <img src="https://img.shields.io/badge/ollama-powered-orange?style=for-the-badge" alt="Ollama"/>
 </p>
@@ -95,7 +95,7 @@ npm install -g mylittle-jarvis && jarvis --setup
 │                           │                                  │
 │                           ▼                                  │
 │            ┌─────────────────────────────┐                  │
-│            │        85 Tools             │                  │
+│            │        88 Tools             │                  │
 │            │  File | Git | Bash | Browser│                  │
 │            │  Media | Search | NMT | ... │                  │
 │            └─────────────────────────────┘                  │
@@ -123,18 +123,18 @@ npm install -g mylittle-jarvis && jarvis --setup
 <tr>
 <td width="50%">
 
-### 85 Tools
+### 88 Tools
 
 | Category | Count |
 |----------|-------|
 | File | 8 |
 | Code (Bash/Python/Node) | 3 |
 | Git | 8 |
-| Browser (Playwright) | 10 |
-| Media (Image/PDF/Audio) | 10 |
+| Browser (Playwright) | 11 |
+| Media (Image/PDF/Audio) | 11 |
 | Utility | 14 |
 | Search | 5 |
-| Context/Memory | 12 |
+| Context/Memory | 13 |
 | NMT (Knowledge Graph) | 15 |
 
 </td>
@@ -284,7 +284,7 @@ node cli.js --setup
 ║██   ██║██╔══██║██╔══██╗╚██╗ ██╔╝██║╚════██║                   ║
 ║╚█████╔╝██║  ██║██║  ██║ ╚████╔╝ ██║███████║                   ║
 ║ ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝  ╚═══╝  ╚═╝╚══════╝                   ║
-║  v2.0.0 | 85 Tools | Ollama: qwen3:1.7b, qwen3:8b             ║
+║  v2.0.0 | 88 Tools | Ollama: qwen3:1.7b, qwen3:8b             ║
 ╚═══════════════════════════════════════════════════════════════╝
 
 🤖 JARVIS ready. Type /help for commands.
@@ -298,13 +298,13 @@ you> 서울 날씨 어때?
 
 you> 이 프로젝트 분석해줘
 🔧 [search-structure] 호출 중...
-🤖 src/ 하위 15개 모듈, 85개 도구, 3-Agent 아키텍처
+🤖 src/ 하위 15개 모듈, 88개 도구, 3-Agent 아키텍처
 
 you> /status
 ╔════════════════════════════════════════════╗
 ║  Orchestrator : qwen3:1.7b     ✅ Online  ║
 ║  Assistant    : qwen3:8b       ✅ Online  ║
-║  Tools        : 85             ✅ Loaded  ║
+║  Tools        : 88             ✅ Loaded  ║
 ║  Memory       : 142 entries    ✅ Active  ║
 ╚════════════════════════════════════════════╝
 
@@ -476,15 +476,15 @@ jarvis/
 │   │   ├── tool/
 │   │   │   ├── tool-executor.js
 │   │   │   └── tools/
-│   │   │       ├── index.js      # Tool registry (85 tools)
+│   │   │       ├── index.js      # Tool registry (88 tools)
 │   │   │       ├── file.js       # 8 tools
 │   │   │       ├── bash.js       # 3 tools
 │   │   │       ├── git.js        # 8 tools
-│   │   │       ├── browser.js    # 10 tools
-│   │   │       ├── media.js      # 10 tools
+│   │   │       ├── browser.js    # 11 tools
+│   │   │       ├── media.js      # 11 tools
 │   │   │       ├── utility.js    # 14 tools
 │   │   │       ├── search.js     # 5 tools
-│   │   │       ├── context.js    # 12 tools
+│   │   │       ├── context.js    # 13 tools
 │   │   │       └── nmt.js        # 15 tools (Knowledge Graph)
 │   │   └── security/
 │   │       ├── command-sanitizer.js
@@ -636,7 +636,7 @@ npm run compile
 
 | Feature | Description |
 |---------|-------------|
-| **85 Tools** | 파일, Git, Bash, 브라우저, 미디어, 검색, 메모리 |
+| **88 Tools** | 파일, Git, Bash, 브라우저, 미디어, 검색, 메모리 |
 | **Local LLM** | Ollama 기반, 모델 자유 선택 |
 | **Cloud LLM** | Claude API 선택적 사용 |
 | **Multi-Model** | 에이전트별 모델 설정 가능 |

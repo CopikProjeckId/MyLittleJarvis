@@ -412,7 +412,7 @@ ${t('help.exampleSetup')}
   }
 
   async handleCommand(cmd, rl) {
-    const [command] = cmd.split(' ');
+    const [command, ...rest] = cmd.split(' ');
 
     switch (command.toLowerCase()) {
       case 'help':
@@ -422,6 +422,7 @@ ${t('help.commands')}
    /help, /h      - ${t('help.helpDesc')}
    /status, /s    - ${t('help.statusDesc')}
    /channels      - Show connected channels
+   /memory [query]- Search long-term memory (NMT)
    /setup         - ${t('help.setupDesc')}
    /config        - ${t('help.configDesc')}
    /clear, /c     - ${t('help.clearDesc')}
@@ -492,6 +493,40 @@ ${tf('status.contextMessages', { count: status.contextSize })}
           for (const [name, channel] of this.channels) {
             const status = channel.isRunning !== false ? '✅' : '❌';
             console.log(`   • ${name}: ${status}`);
+          }
+          console.log('');
+        }
+        break;
+
+      case 'memory':
+        const query = rest.join(' ').trim();
+        if (!query) {
+          console.log('\n   Usage: /memory <search query>');
+          console.log('   Example: /memory 지난주 회의 내용\n');
+        } else {
+          console.log(`\n🔍 Searching memory: "${query}"...`);
+          try {
+            const { registry } = await import('./src/core/tool/tools/index.js');
+            const searchResult = await registry.execute('nmt-search', { query, topK: 5 });
+            if (searchResult?.error) {
+              console.log(`   ❌ ${searchResult.error}`);
+            } else if (searchResult?.data?.results?.length > 0) {
+              const results = searchResult.data.results;
+              console.log(`   Found ${results.length} result(s):\n`);
+              results.forEach((r, i) => {
+                const title = r.title || r.content?.substring(0, 60) || 'Untitled';
+                const score = r.score ? ` (${(r.score * 100).toFixed(0)}%)` : '';
+                console.log(`   [${i + 1}] ${title}${score}`);
+                if (r.content && r.content.length > 0) {
+                  const preview = r.content.substring(0, 100).replace(/\n/g, ' ');
+                  console.log(`       ${preview}${r.content.length > 100 ? '...' : ''}`);
+                }
+              });
+            } else {
+              console.log('   No results found.');
+            }
+          } catch (error) {
+            console.log(`   ❌ Memory search failed: ${error.message}`);
           }
           console.log('');
         }
