@@ -176,8 +176,8 @@ npm install -g mylittle-jarvis && jarvis --setup
 
 ```bash
 # Clone
-git clone https://github.com/CopikProjeckId/jarvis-2flow.git
-cd jarvis-2flow/jarvis
+git clone https://github.com/CopikProjeckId/MyLittleJarvis.git
+cd MyLittleJarvis/jarvis
 
 # Install
 npm install

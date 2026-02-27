@@ -31,11 +31,11 @@
   "license": "SEE LICENSE IN LICENSE",
   "repository": {
     "type": "git",
-    "url": "https://github.com/CopikProjeckId/jarvis-2flow.git"
+    "url": "https://github.com/CopikProjeckId/MyLittleJarvis.git"
   },
-  "homepage": "https://github.com/CopikProjeckId/jarvis-2flow#readme",
+  "homepage": "https://github.com/CopikProjeckId/MyLittleJarvis#readme",
   "bugs": {
-    "url": "https://github.com/CopikProjeckId/jarvis-2flow/issues"
+    "url": "https://github.com/CopikProjeckId/MyLittleJarvis/issues"
   },
   "keywords": [
     "jarvis",
