@@ -569,6 +569,99 @@ jarvis/
 
 ---
 
+## Contributing
+
+JARVIS는 커뮤니티의 기여로 성장합니다. 모든 형태의 기여를 환영합니다!
+
+### How to Contribute
+
+```bash
+# 1. Fork & Clone
+git clone https://github.com/YOUR_USERNAME/jarvis-2flow.git
+cd jarvis-2flow/jarvis
+npm install
+
+# 2. Branch
+git checkout -b feature/your-feature
+
+# 3. Develop & Test
+node cli.js  # 로컬에서 테스트
+
+# 4. Commit & Push
+git add .
+git commit -m "feat: add your feature"
+git push origin feature/your-feature
+
+# 5. Pull Request
+# GitHub에서 PR 생성
+```
+
+### Contribution Areas
+
+| 영역 | 설명 | 난이도 |
+|------|------|--------|
+| **New Tools** | 85개 도구에 새 도구 추가 | ★★☆ |
+| **Channel Adapters** | 새 메신저 채널 연동 (Line, KakaoTalk...) | ★★☆ |
+| **i18n** | 새 언어 번역 추가 (`src/i18n/locales/`) | ★☆☆ |
+| **Bug Fix** | 이슈 수정 | ★☆☆ |
+| **Documentation** | 문서 개선 | ★☆☆ |
+| **NMT Memory** | 장기 기억 알고리즘 개선 | ★★★ |
+| **Security** | 보안 기능 강화 | ★★★ |
+| **Model Support** | 새 LLM 백엔드 추가 (vLLM, LM Studio...) | ★★☆ |
+
+### Adding a New Tool
+
+새 도구를 추가하려면 `src/core/tool/tools/`에 함수를 작성하고 `index.js`에 등록하세요:
+
+```javascript
+// src/core/tool/tools/your-tool.js
+export function createYourTools() {
+  return [
+    {
+      name: 'your-tool-name',
+      description: '도구 설명',
+      parameters: {
+        type: 'object',
+        properties: {
+          input: { type: 'string', description: '입력값' }
+        },
+        required: ['input']
+      },
+      execute: async (params) => {
+        // 구현
+        return { result: 'done' };
+      }
+    }
+  ];
+}
+```
+
+### Commit Convention
+
+| Prefix | 용도 |
+|--------|------|
+| `feat:` | 새 기능 |
+| `fix:` | 버그 수정 |
+| `docs:` | 문서 |
+| `refactor:` | 리팩토링 |
+| `test:` | 테스트 |
+| `chore:` | 빌드/설정 |
+
+### Guidelines
+
+- PR은 하나의 기능/수정에 집중
+- 기존 코드 스타일 유지 (ESM, async/await)
+- 민감 정보 포함 금지 (API 키, 토큰 등)
+- 한국어/영어 모두 환영
+
+### Issue & Discussion
+
+- **Bug Report**: [Issues](https://github.com/CopikProjeckId/jarvis-2flow/issues)에 버그 리포트
+- **Feature Request**: Issue에 `enhancement` 라벨로 요청
+- **질문**: Issue에 `question` 라벨로 질문
+
+---
+
 ## License
 
 See [LICENSE](LICENSE) file.
@@ -584,5 +677,8 @@ See [LICENSE](LICENSE) file.
 
 <p align="center">
   <strong>Local-First. Cloud-Optional. Your Choice.</strong><br/>
-  <sub>Built with Ollama + Claude</sub>
+  <sub>Built with Ollama + Claude</sub><br/><br/>
+  <a href="https://github.com/CopikProjeckId/jarvis-2flow/issues">Report Bug</a> ·
+  <a href="https://github.com/CopikProjeckId/jarvis-2flow/issues">Request Feature</a> ·
+  <a href="https://github.com/CopikProjeckId/jarvis-2flow/fork">Fork & Contribute</a>
 </p>
