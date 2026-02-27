@@ -1,6 +1,6 @@
 {
   "name": "mylittle-jarvis",
-  "version": "2.0.1",
+  "version": "2.1.1",
   "description": "MyLittle JARVIS - Personal AI Assistant with 3-Agent System (Ollama + Claude)",
   "main": "cli.js",
   "bin": {
