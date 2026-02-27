@@ -3,42 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JARVIS - Dashboard</title>
+  <title>JARVIS :: DASHBOARD</title>
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#00D4AA">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <meta name="theme-color" content="#33ff00">
+  <link rel="stylesheet" href="terminal-base.css">
   <style>
-    :root {
-      --bg-primary: #0A0A0F;
-      --bg-secondary: #12121A;
-      --bg-tertiary: #1A1A24;
-      --bg-card: #16161E;
-      --accent-primary: #00D4AA;
-      --accent-secondary: #00B4D8;
-      --text-primary: #FFFFFF;
-      --text-secondary: #A0A0B0;
-      --text-tertiary: #6A6A80;
-      --success: #10B981;
-      --warning: #F59E0B;
-      --error: #EF4444;
+    /* Page-specific styles */
+    html, body {
+      min-height: 100%;
     }
-    
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    
+
     body {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      min-height: 100vh;
-      padding-bottom: 80px;
+      padding-bottom: 70px;
     }
-    
+
     /* Header */
     .header {
-      background: rgba(10, 10, 15, 0.9);
-      backdrop-filter: blur(12px);
-      padding: 16px 20px;
-      border-bottom: 1px solid rgba(0, 212, 170, 0.2);
+      background: var(--bg-secondary);
+      padding: var(--space-md);
+      border-bottom: 1px solid var(--border);
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -46,277 +29,461 @@
       top: 0;
       z-index: 100;
     }
-    
+
     .logo {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: var(--space-sm);
     }
-    
+
     .logo-icon {
-      width: 36px;
-      height: 36px;
-      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
+      color: var(--primary);
+      text-shadow: var(--glow-text);
     }
-    
+
     .logo-text {
-      font-weight: 700;
-      font-size: 18px;
+      font-size: var(--font-size-lg);
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: var(--primary);
+      text-shadow: var(--glow-text);
     }
-    
+
     .header-actions {
       display: flex;
-      gap: 8px;
+      gap: var(--space-xs);
     }
-    
+
     .header-btn {
-      background: var(--bg-tertiary);
-      border: none;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
       width: 36px;
       height: 36px;
-      border-radius: 8px;
       cursor: pointer;
-      font-size: 16px;
+      font-family: var(--font-mono);
+      font-size: var(--font-size-sm);
+      transition: var(--transition-fast);
     }
-    
+
+    .header-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
     /* Main Content */
     .content {
-      padding: 20px;
+      padding: var(--space-md);
     }
-    
-    /* Status Overview */
-    .status-overview {
+
+    /* ASCII Section Header */
+    .section-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: var(--space-md);
+      color: var(--text-secondary);
+      font-size: var(--font-size-sm);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .section-header::before {
+      content: '+--[ ';
+      color: var(--text-muted);
+    }
+
+    .section-header::after {
+      content: ' ]' attr(data-suffix);
+      color: var(--text-muted);
+      flex: 1;
+    }
+
+    .section-header::after {
+      content: ' ]-------------------------------------------';
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    /* Status Grid */
+    .status-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      margin-bottom: 24px;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-lg);
     }
-    
+
     .status-card {
-      background: var(--bg-card);
-      border: 1px solid rgba(0, 212, 170, 0.1);
-      border-radius: 12px;
-      padding: 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      padding: var(--space-md);
     }
-    
+
     .status-card.full {
       grid-column: span 2;
     }
-    
+
     .status-label {
-      font-size: 12px;
-      color: var(--text-tertiary);
-      margin-bottom: 8px;
+      font-size: var(--font-size-xs);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: var(--space-xs);
     }
-    
+
+    .status-label::before {
+      content: '// ';
+    }
+
     .status-value {
-      font-size: 24px;
+      font-size: var(--font-size-2xl);
       font-weight: 700;
+      text-shadow: var(--glow-text);
     }
-    
-    .status-value.success { color: var(--success); }
-    .status-value.warning { color: var(--warning); }
+
+    .status-value.online { color: var(--primary); }
+    .status-value.warning { color: var(--secondary); }
     .status-value.error { color: var(--error); }
-    
+
     .status-sub {
-      font-size: 12px;
-      color: var(--text-secondary);
-      margin-top: 4px;
+      font-size: var(--font-size-xs);
+      color: var(--text-muted);
+      margin-top: var(--space-xs);
     }
-    
+
+    .status-sub::before {
+      content: '> ';
+    }
+
     /* Progress Bar */
+    .progress-container {
+      margin-top: var(--space-sm);
+    }
+
     .progress-bar {
-      height: 6px;
-      background: var(--bg-tertiary);
-      border-radius: 3px;
-      margin-top: 8px;
+      height: 4px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
       overflow: hidden;
     }
-    
+
     .progress-fill {
       height: 100%;
-      border-radius: 3px;
       transition: width 0.3s;
     }
-    
-    .progress-fill.green { background: var(--success); }
-    .progress-fill.yellow { background: var(--warning); }
-    .progress-fill.red { background: var(--error); }
-    
+
+    .progress-fill.green {
+      background: var(--primary);
+      box-shadow: 0 0 10px var(--primary-glow);
+    }
+    .progress-fill.yellow {
+      background: var(--secondary);
+      box-shadow: 0 0 10px var(--secondary-glow);
+    }
+    .progress-fill.red {
+      background: var(--error);
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: var(--font-size-xs);
+      color: var(--text-muted);
+      margin-top: var(--space-xs);
+    }
+
     /* Section */
     .section {
-      margin-bottom: 24px;
+      margin-bottom: var(--space-lg);
     }
-    
-    .section-title {
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 12px;
-      color: var(--text-secondary);
-    }
-    
-    /* Model Card */
+
+    /* Model List */
     .model-list {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: var(--space-xs);
     }
-    
+
     .model-card {
-      background: var(--bg-card);
-      border: 1px solid rgba(0, 212, 170, 0.1);
-      border-radius: 10px;
-      padding: 12px 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      padding: var(--space-md);
       display: flex;
       justify-content: space-between;
       align-items: center;
+      transition: var(--transition-fast);
     }
-    
+
+    .model-card:hover {
+      border-color: var(--primary-dim);
+    }
+
     .model-info {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: var(--space-md);
     }
-    
+
     .model-icon {
-      width: 32px;
-      height: 32px;
-      background: var(--bg-tertiary);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      color: var(--text-muted);
+      font-size: var(--font-size-lg);
     }
-    
+
     .model-name {
       font-weight: 500;
+      color: var(--text-bright);
     }
-    
+
     .model-type {
-      font-size: 12px;
-      color: var(--text-tertiary);
+      font-size: var(--font-size-xs);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
-    
+
     .model-status {
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 12px;
+      gap: var(--space-sm);
+      font-size: var(--font-size-xs);
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
-    
+
     .model-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
+      width: 6px;
+      height: 6px;
     }
-    
-    .model-dot.active { background: var(--success); }
-    .model-dot.inactive { background: var(--text-tertiary); }
-    
-    /* Session Card */
+
+    .model-dot.active {
+      background: var(--primary);
+      box-shadow: 0 0 8px var(--primary-glow);
+    }
+    .model-dot.inactive {
+      background: var(--text-muted);
+    }
+
+    .model-status-text.active { color: var(--primary); }
+    .model-status-text.inactive { color: var(--text-muted); }
+
+    /* Session List */
     .session-list {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: var(--space-xs);
     }
-    
+
     .session-card {
-      background: var(--bg-card);
-      border: 1px solid rgba(0, 212, 170, 0.1);
-      border-radius: 10px;
-      padding: 12px 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      padding: var(--space-md);
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-    
+
     .session-info {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 2px;
     }
-    
+
     .session-channel {
-      font-weight: 500;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: var(--space-sm);
+      font-weight: 500;
     }
-    
+
+    .session-channel-icon {
+      color: var(--secondary);
+    }
+
     .session-time {
-      font-size: 12px;
-      color: var(--text-tertiary);
+      font-size: var(--font-size-xs);
+      color: var(--text-muted);
     }
-    
+
+    .session-time::before {
+      content: '@ ';
+    }
+
+    .session-status {
+      font-size: var(--font-size-xs);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .session-status.active { color: var(--primary); }
+    .session-status.ended { color: var(--text-muted); }
+
     /* Quick Actions */
     .quick-actions {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
+      gap: var(--space-sm);
     }
-    
+
     .action-btn {
-      background: var(--bg-card);
-      border: 1px solid rgba(0, 212, 170, 0.2);
-      border-radius: 12px;
-      padding: 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      padding: var(--space-md);
       cursor: pointer;
-      transition: all 0.2s;
+      transition: var(--transition-fast);
       text-align: center;
+      font-family: var(--font-mono);
     }
-    
+
     .action-btn:hover {
-      background: var(--bg-tertiary);
-      border-color: var(--accent-primary);
+      border-color: var(--primary);
+      box-shadow: var(--glow-primary);
     }
-    
+
+    .action-btn:active {
+      transform: translateY(1px);
+    }
+
     .action-icon {
-      font-size: 24px;
-      margin-bottom: 8px;
+      font-size: var(--font-size-xl);
+      margin-bottom: var(--space-sm);
+      color: var(--primary);
     }
-    
+
     .action-label {
-      font-size: 13px;
+      font-size: var(--font-size-xs);
       color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
-    
+
+    .action-label::before { content: '[ '; color: var(--text-muted); }
+    .action-label::after { content: ' ]'; color: var(--text-muted); }
+
     /* Navigation */
     .nav {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
-      background: rgba(10, 10, 15, 0.95);
-      backdrop-filter: blur(12px);
-      border-top: 1px solid rgba(0, 212, 170, 0.1);
+      background: var(--bg-primary);
+      border-top: 1px solid var(--border);
       display: flex;
       justify-content: space-around;
-      padding: 12px 0;
+      padding: var(--space-sm) 0;
     }
-    
+
     .nav-item {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
-      padding: 8px 16px;
-      color: var(--text-tertiary);
+      gap: 2px;
+      padding: var(--space-xs) var(--space-md);
+      color: var(--text-muted);
       text-decoration: none;
-      font-size: 12px;
-      transition: color 0.2s;
+      font-size: var(--font-size-xs);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: var(--transition-fast);
+      border: 1px solid transparent;
     }
-    
+
+    .nav-item:hover {
+      color: var(--text-secondary);
+      border-color: var(--border);
+    }
+
     .nav-item.active {
-      color: var(--accent-primary);
+      color: var(--primary);
+      border-color: var(--primary);
+      text-shadow: var(--glow-text);
     }
-    
+
     .nav-icon {
-      font-size: 20px;
+      font-size: var(--font-size-lg);
+    }
+
+    /* Terminal-style confirm dialog */
+    .confirm-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .confirm-overlay.show {
+      display: flex;
+    }
+
+    .confirm-box {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      padding: var(--space-lg);
+      max-width: 400px;
+      width: 90%;
+    }
+
+    .confirm-title {
+      color: var(--secondary);
+      font-size: var(--font-size-sm);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: var(--space-md);
+    }
+
+    .confirm-message {
+      color: var(--text-bright);
+      margin-bottom: var(--space-lg);
+      line-height: 1.6;
+      white-space: pre-line;
+    }
+
+    .confirm-actions {
+      display: flex;
+      gap: var(--space-sm);
+      justify-content: flex-end;
+    }
+
+    .confirm-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: var(--space-sm) var(--space-md);
+      font-family: var(--font-mono);
+      font-size: var(--font-size-sm);
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: var(--transition-fast);
+    }
+
+    .confirm-btn:hover {
+      border-color: var(--text-secondary);
+      color: var(--text-secondary);
+    }
+
+    .confirm-btn.danger {
+      border-color: var(--error-dim);
+      color: var(--error);
+    }
+
+    .confirm-btn.danger:hover {
+      border-color: var(--error);
+      box-shadow: 0 0 10px rgba(255, 51, 51, 0.3);
+    }
+
+    .confirm-btn.primary {
+      border-color: var(--primary-dim);
+      color: var(--primary);
+    }
+
+    .confirm-btn.primary:hover {
+      border-color: var(--primary);
+      box-shadow: var(--glow-primary);
     }
   </style>
 </head>
@@ -324,122 +491,103 @@
   <!-- Header -->
   <header class="header">
     <div class="logo">
-      <div class="logo-icon">🤖</div>
-      <span class="logo-text">JARVIS Dashboard</span>
+      <span class="logo-icon">[J]</span>
+      <span class="logo-text">DASHBOARD</span>
     </div>
     <div class="header-actions">
-      <button class="header-btn">⚙️</button>
-      <button class="header-btn">🔔</button>
+      <button class="header-btn" title="Settings">[S]</button>
+      <button class="header-btn" title="Alerts">[!]</button>
     </div>
   </header>
 
   <!-- Main Content -->
   <main class="content">
     <!-- Status Overview -->
-    <div class="status-overview">
+    <div class="section-header">SYSTEM STATUS</div>
+    <div class="status-grid">
       <div class="status-card">
-        <div class="status-label">System Status</div>
-        <div class="status-value success">Online</div>
-        <div class="status-sub">Running for 15m</div>
+        <div class="status-label">Status</div>
+        <div class="status-value online" id="systemStatus">ONLINE</div>
+        <div class="status-sub" id="uptime">Running for 0m</div>
       </div>
-      
+
       <div class="status-card">
-        <div class="status-label">Active Sessions</div>
-        <div class="status-value">3</div>
-        <div class="status-sub">1 Telegram, 2 CLI</div>
+        <div class="status-label">Sessions</div>
+        <div class="status-value" id="sessionsCount">0</div>
+        <div class="status-sub">Active connections</div>
       </div>
-      
+
       <div class="status-card full">
         <div class="status-label">Memory Usage</div>
-        <div class="status-value">128MB <span style="font-size:14px;color:var(--text-tertiary)">/ 512MB</span></div>
-        <div class="progress-bar">
-          <div class="progress-fill green" style="width: 25%"></div>
+        <div class="status-value" id="memoryValue">0MB</div>
+        <div class="progress-container">
+          <div class="progress-bar">
+            <div class="progress-fill green" id="progressFill" style="width: 0%"></div>
+          </div>
+          <div class="progress-label">
+            <span id="memoryPercent">0% used</span>
+            <span>512MB max</span>
+          </div>
         </div>
-        <div class="status-sub">25% used</div>
       </div>
     </div>
-    
+
     <!-- Models -->
     <div class="section">
-      <div class="section-title">Active Models</div>
-      <div class="model-list">
+      <div class="section-header">ACTIVE MODELS</div>
+      <div class="model-list" id="modelList">
         <div class="model-card">
           <div class="model-info">
-            <div class="model-icon">☁️</div>
+            <span class="model-icon">[*]</span>
             <div>
-              <div class="model-name">qwen3.5</div>
-              <div class="model-type">Ollama Cloud</div>
-            </div>
-          </div>
-          <div class="model-status">
-            <span class="model-dot active"></span>
-            <span style="color: var(--success)">Active</span>
-          </div>
-        </div>
-        
-        <div class="model-card">
-          <div class="model-info">
-            <div class="model-icon">💾</div>
-            <div>
-              <div class="model-name">qwen2.5:1.5b</div>
-              <div class="model-type">Local (Fallback)</div>
+              <div class="model-name">Loading...</div>
+              <div class="model-type">Checking connection</div>
             </div>
           </div>
           <div class="model-status">
             <span class="model-dot inactive"></span>
-            <span style="color: var(--text-tertiary)">Standby</span>
+            <span class="model-status-text inactive">--</span>
           </div>
         </div>
       </div>
     </div>
-    
+
     <!-- Recent Sessions -->
     <div class="section">
-      <div class="section-title">Recent Sessions</div>
-      <div class="session-list">
+      <div class="section-header">RECENT SESSIONS</div>
+      <div class="session-list" id="sessionList">
         <div class="session-card">
           <div class="session-info">
             <div class="session-channel">
-              <span>💬</span>
-              <span>Telegram</span>
+              <span class="session-channel-icon">[T]</span>
+              <span>Terminal</span>
             </div>
-            <div class="session-time">2 minutes ago</div>
+            <div class="session-time">--</div>
           </div>
-          <span style="color: var(--success)">Active</span>
-        </div>
-        
-        <div class="session-card">
-          <div class="session-info">
-            <div class="session-channel">
-              <span>💻</span>
-              <span>CLI</span>
-            </div>
-            <div class="session-time">15 minutes ago</div>
-          </div>
-          <span style="color: var(--text-tertiary)">Ended</span>
+          <span class="session-status active">ACTIVE</span>
         </div>
       </div>
     </div>
-    
+
     <!-- Quick Actions -->
     <div class="section">
-      <div class="section-title">Quick Actions</div>
+      <div class="section-header">QUICK ACTIONS</div>
       <div class="quick-actions">
         <div class="action-btn" onclick="restart()">
-          <div class="action-icon">🔄</div>
+          <div class="action-icon">[R]</div>
           <div class="action-label">Restart</div>
         </div>
         <div class="action-btn" onclick="clearMemory()">
-          <div class="action-icon">🗑️</div>
-          <div class="action-label">Clear Memory</div>
+          <div class="action-icon">[X]</div>
+          <div class="action-label">Clear</div>
         </div>
         <div class="action-btn" onclick="switchModel()">
-          <div class="action-icon">🔀</div>
-          <div class="action-label">Switch Model</div>
+          <div class="action-icon">[M]</div>
+          <div class="action-label">Model</div>
         </div>
         <div class="action-btn" onclick="viewLogs()">
-          <div class="action-icon">📋</div>
-          <div class="action-label">View Logs</div>
+          <div class="action-icon">[L]</div>
+          <div class="action-label">Logs</div>
         </div>
       </div>
     </div>
@@ -448,32 +596,209 @@
   <!-- Navigation -->
   <nav class="nav">
     <a href="chat.html" class="nav-item">
-      <span class="nav-icon">💬</span>
+      <span class="nav-icon">[C]</span>
       <span>Chat</span>
     </a>
     <a href="terminal.html" class="nav-item">
-      <span class="nav-icon">💻</span>
-      <span>Terminal</span>
+      <span class="nav-icon">[T]</span>
+      <span>Term</span>
     </a>
     <a href="dashboard.html" class="nav-item active">
-      <span class="nav-icon">📊</span>
-      <span>Dashboard</span>
+      <span class="nav-icon">[D]</span>
+      <span>Dash</span>
     </a>
   </nav>
 
+  <!-- Confirm Dialog -->
+  <div class="confirm-overlay" id="confirmOverlay">
+    <div class="confirm-box">
+      <div class="confirm-title" id="confirmTitle">CONFIRM ACTION</div>
+      <div class="confirm-message" id="confirmMessage">Are you sure?</div>
+      <div class="confirm-actions">
+        <button class="confirm-btn" onclick="hideConfirm()">[ CANCEL ]</button>
+        <button class="confirm-btn danger" id="confirmBtn" onclick="executeConfirm()">[ CONFIRM ]</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api-client.js"></script>
   <script>
-    function restart() {
-      alert('JARVIS Restarting...');
+    const api = window.JarvisAPI;
+
+    // DOM elements
+    const systemStatus = document.getElementById('systemStatus');
+    const uptimeEl = document.getElementById('uptime');
+    const sessionsCount = document.getElementById('sessionsCount');
+    const memoryValue = document.getElementById('memoryValue');
+    const progressFill = document.getElementById('progressFill');
+    const memoryPercent = document.getElementById('memoryPercent');
+    const modelList = document.getElementById('modelList');
+
+    // Confirm dialog state
+    let pendingAction = null;
+
+    // Initial data fetch
+    loadDashboardData();
+
+    // Auto-refresh every 10 seconds
+    setInterval(loadDashboardData, 10000);
+
+    async function loadDashboardData() {
+      try {
+        const [status, health] = await Promise.all([
+          api.getStatus().catch(() => null),
+          api.health().catch(() => null)
+        ]);
+
+        // Update status
+        if (status) {
+          const isOnline = status.ollama === 'available';
+          systemStatus.textContent = isOnline ? 'ONLINE' : 'OFFLINE';
+          systemStatus.className = `status-value ${isOnline ? 'online' : 'error'}`;
+
+          if (status.uptime) {
+            uptimeEl.textContent = `Running for ${formatUptime(status.uptime)}`;
+          }
+
+          if (status.activeSessions !== undefined) {
+            sessionsCount.textContent = status.activeSessions;
+          }
+
+          // Memory usage (simulate based on context size)
+          const contextSize = status.contextSize || 0;
+          const memUsed = Math.min(contextSize * 0.1, 512); // rough estimate
+          const memPercentVal = Math.round((memUsed / 512) * 100);
+          memoryValue.textContent = `${Math.round(memUsed)}MB`;
+          progressFill.style.width = `${memPercentVal}%`;
+          progressFill.className = `progress-fill ${memPercentVal < 50 ? 'green' : memPercentVal < 80 ? 'yellow' : 'red'}`;
+          memoryPercent.textContent = `${memPercentVal}% used`;
+        }
+
+        // Update models
+        if (health && health.models) {
+          updateModelList(health.models, status?.orchestrator || 'qwen2.5:1.5b');
+        }
+
+      } catch (error) {
+        console.error('Dashboard update error:', error);
+        systemStatus.textContent = 'ERROR';
+        systemStatus.className = 'status-value error';
+      }
     }
-    function clearMemory() {
-      alert('Memory Cleared');
+
+    function updateModelList(models, activeModel) {
+      modelList.innerHTML = models.slice(0, 5).map((model, idx) => {
+        const isActive = model === activeModel || idx === 0;
+        return `
+          <div class="model-card">
+            <div class="model-info">
+              <span class="model-icon">${isActive ? '[*]' : '[ ]'}</span>
+              <div>
+                <div class="model-name">${model}</div>
+                <div class="model-type">${isActive ? 'PRIMARY' : 'FALLBACK'}</div>
+              </div>
+            </div>
+            <div class="model-status">
+              <span class="model-dot ${isActive ? 'active' : 'inactive'}"></span>
+              <span class="model-status-text ${isActive ? 'active' : 'inactive'}">${isActive ? 'ACTIVE' : 'STANDBY'}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
     }
-    function switchModel() {
-      alert('Switching Model...');
+
+    function formatUptime(seconds) {
+      if (seconds < 60) return `${seconds}s`;
+      if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+      const hours = Math.floor(seconds / 3600);
+      const mins = Math.floor((seconds % 3600) / 60);
+      return `${hours}h ${mins}m`;
     }
+
+    function showConfirm(title, message, action, isDanger = false) {
+      document.getElementById('confirmTitle').textContent = title;
+      document.getElementById('confirmMessage').textContent = message;
+      const btn = document.getElementById('confirmBtn');
+      btn.className = `confirm-btn ${isDanger ? 'danger' : 'primary'}`;
+      pendingAction = action;
+      document.getElementById('confirmOverlay').classList.add('show');
+    }
+
+    function hideConfirm() {
+      document.getElementById('confirmOverlay').classList.remove('show');
+      pendingAction = null;
+    }
+
+    function executeConfirm() {
+      if (pendingAction) {
+        pendingAction();
+      }
+      hideConfirm();
+    }
+
+    async function restart() {
+      showConfirm(
+        'RESTART JARVIS',
+        '> WARNING: This will restart the JARVIS service.\n> All active connections will be terminated.\n\nProceed with restart?',
+        async () => {
+          try {
+            await api.executeTool('restart', {});
+            showConfirm('RESTARTING', '> JARVIS is restarting...\n> Page will refresh in 3 seconds.', () => {});
+            setTimeout(() => location.reload(), 3000);
+          } catch (error) {
+            showConfirm('ERROR', `> Restart failed: ${error.message}`, () => {});
+          }
+        },
+        true
+      );
+    }
+
+    async function clearMemory() {
+      showConfirm(
+        'CLEAR CONTEXT',
+        '> WARNING: This will clear all conversation history.\n> This action cannot be undone.\n\nProceed with clear?',
+        async () => {
+          try {
+            await api.request('/api/chat/clear', { method: 'POST' });
+            showConfirm('SUCCESS', '> Context cleared successfully.', () => {});
+            loadDashboardData();
+          } catch (error) {
+            showConfirm('ERROR', `> Clear failed: ${error.message}`, () => {});
+          }
+        },
+        true
+      );
+    }
+
+    async function switchModel() {
+      const health = await api.health();
+      if (!health.models || health.models.length === 0) {
+        showConfirm('ERROR', '> No models available.\n> Check Ollama connection.', () => {});
+        return;
+      }
+
+      const modelListStr = health.models.slice(0, 5).map((m, i) => `  ${i + 1}. ${m}`).join('\n');
+      const model = prompt(`AVAILABLE MODELS:\n\n${modelListStr}\n\nEnter model name:`);
+
+      if (model) {
+        try {
+          await api.setConfig('model', model);
+          showConfirm('SUCCESS', `> Model switched to: ${model}`, () => {});
+          loadDashboardData();
+        } catch (error) {
+          showConfirm('ERROR', `> Switch failed: ${error.message}`, () => {});
+        }
+      }
+    }
+
     function viewLogs() {
-      alert('Opening Logs...');
+      window.location.href = 'terminal.html';
     }
+
+    // Close confirm on escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') hideConfirm();
+    });
   </script>
 </body>
 </html>

@@ -1,0 +1,577 @@
+/* ============================================
+   JARVIS Terminal Design System
+   ============================================ */
+
+/* Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+/* ============================================
+   Design Tokens
+   ============================================ */
+:root {
+  /* Colors - Terminal Palette */
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #0f0f0f;
+  --bg-elevated: #141414;
+  --bg-card: #0d0d0d;
+
+  --primary: #33ff00;
+  --primary-dim: #1f521f;
+  --primary-glow: rgba(51, 255, 0, 0.4);
+
+  --secondary: #ffb000;
+  --secondary-dim: #523f1f;
+  --secondary-glow: rgba(255, 176, 0, 0.4);
+
+  --error: #ff3333;
+  --error-dim: #521f1f;
+
+  --text-primary: #e0e0e0;
+  --text-bright: #ffffff;
+  --text-secondary: #a0a0a0;
+  --text-muted: #666666;
+  --text-dim: #444444;
+
+  --border: #1f521f;
+  --border-bright: #33ff00;
+
+  /* Typography */
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+  --font-size-xs: 10px;
+  --font-size-sm: 12px;
+  --font-size-base: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 24px;
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  /* Accent colors for highlights */
+  --accent: #33ff00;
+  --accent-secondary: #ffb000;
+
+  /* Effects */
+  --glow-primary: 0 0 10px var(--primary-glow), 0 0 20px var(--primary-glow);
+  --glow-secondary: 0 0 10px var(--secondary-glow), 0 0 20px var(--secondary-glow);
+  --glow-text: 0 0 5px var(--primary-glow);
+
+  /* Transitions */
+  --transition-fast: 0.1s ease;
+  --transition-base: 0.2s ease;
+}
+
+/* ============================================
+   Base Reset & Typography
+   ============================================ */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-base);
+  line-height: 1.6;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* CRT Scanline Effect */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.1) 0px,
+    rgba(0, 0, 0, 0.1) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+}
+
+/* Screen Flicker Animation */
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  92% { opacity: 1; }
+  93% { opacity: 0.9; }
+  94% { opacity: 1; }
+}
+
+body {
+  animation: flicker 4s infinite;
+}
+
+/* ============================================
+   Typography Utilities
+   ============================================ */
+.text-primary { color: var(--text-primary); }
+.text-bright { color: var(--text-bright); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-muted); }
+.text-accent { color: var(--primary); }
+.text-amber { color: var(--secondary); }
+.text-error { color: var(--error); }
+.text-glow { text-shadow: var(--glow-text); }
+
+.text-xs { font-size: var(--font-size-xs); }
+.text-sm { font-size: var(--font-size-sm); }
+.text-base { font-size: var(--font-size-base); }
+.text-lg { font-size: var(--font-size-lg); }
+.text-xl { font-size: var(--font-size-xl); }
+.text-2xl { font-size: var(--font-size-2xl); }
+
+.uppercase { text-transform: uppercase; }
+.font-bold { font-weight: 700; }
+
+/* ============================================
+   ASCII Box Components
+   ============================================ */
+.terminal-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: var(--space-md);
+  position: relative;
+}
+
+.terminal-card::before {
+  content: '+' attr(data-title) '+';
+  position: absolute;
+  top: -10px;
+  left: var(--space-md);
+  background: var(--bg-card);
+  padding: 0 var(--space-sm);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Card Header */
+.card-header {
+  border-bottom: 1px dashed var(--border);
+  padding-bottom: var(--space-sm);
+  margin-bottom: var(--space-md);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-header h2,
+.card-header h3 {
+  font-size: var(--font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-secondary);
+}
+
+/* ============================================
+   Terminal Buttons
+   ============================================ */
+.btn {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: var(--space-sm) var(--space-md);
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: var(--transition-fast);
+  position: relative;
+}
+
+.btn::before { content: '[ '; }
+.btn::after { content: ' ]'; }
+
+.btn:hover {
+  border-color: var(--primary);
+  text-shadow: var(--glow-text);
+  box-shadow: var(--glow-primary);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-primary {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.btn-secondary {
+  border-color: var(--secondary);
+  color: var(--secondary);
+}
+
+.btn-secondary:hover {
+  box-shadow: var(--glow-secondary);
+}
+
+.btn-ghost {
+  border: none;
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.btn-ghost::before,
+.btn-ghost::after {
+  color: var(--text-muted);
+}
+
+/* ============================================
+   Terminal Input
+   ============================================ */
+.terminal-input-wrapper {
+  display: flex;
+  align-items: center;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  padding: var(--space-sm) var(--space-md);
+}
+
+.terminal-input-wrapper::before {
+  content: 'user@jarvis:~$ ';
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+  margin-right: var(--space-sm);
+}
+
+.terminal-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-base);
+  caret-color: var(--primary);
+}
+
+.terminal-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Blinking Cursor */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.cursor {
+  display: inline-block;
+  width: 8px;
+  height: 16px;
+  background: var(--primary);
+  animation: blink 1s step-end infinite;
+  vertical-align: middle;
+  margin-left: 2px;
+}
+
+/* ============================================
+   Status Indicators
+   ============================================ */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--font-size-sm);
+}
+
+.status::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: currentColor;
+}
+
+.status-online { color: var(--primary); }
+.status-offline { color: var(--error); }
+.status-warning { color: var(--secondary); }
+
+.status-online::before { box-shadow: 0 0 8px var(--primary-glow); }
+
+/* ============================================
+   Progress Bar
+   ============================================ */
+.progress {
+  height: 4px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: var(--primary);
+  box-shadow: var(--glow-primary);
+  transition: width var(--transition-base);
+}
+
+.progress-bar.amber {
+  background: var(--secondary);
+  box-shadow: var(--glow-secondary);
+}
+
+/* ============================================
+   Terminal List
+   ============================================ */
+.terminal-list {
+  list-style: none;
+}
+
+.terminal-list-item {
+  padding: var(--space-sm) 0;
+  border-bottom: 1px dashed var(--border);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.terminal-list-item:last-child {
+  border-bottom: none;
+}
+
+.terminal-list-item::before {
+  content: '>';
+  color: var(--text-muted);
+}
+
+.terminal-list-item:hover::before {
+  color: var(--primary);
+}
+
+/* ============================================
+   Messages / Chat
+   ============================================ */
+.message {
+  padding: var(--space-md);
+  margin-bottom: var(--space-sm);
+  border-left: 2px solid var(--border);
+  background: var(--bg-secondary);
+}
+
+.message-user {
+  border-left-color: var(--secondary);
+}
+
+.message-user .message-header::before {
+  content: 'USER > ';
+  color: var(--secondary);
+}
+
+.message-assistant {
+  border-left-color: var(--primary);
+}
+
+.message-assistant .message-header::before {
+  content: 'JARVIS > ';
+  color: var(--primary);
+}
+
+.message-header {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: var(--space-xs);
+  color: var(--text-muted);
+}
+
+.message-content {
+  color: var(--text-primary);
+  line-height: 1.7;
+}
+
+.message-content code {
+  background: var(--bg-elevated);
+  padding: 2px 6px;
+  border: 1px solid var(--border);
+  font-size: var(--font-size-sm);
+}
+
+.message-content pre {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  padding: var(--space-md);
+  overflow-x: auto;
+  margin: var(--space-sm) 0;
+}
+
+/* ============================================
+   Navigation
+   ============================================ */
+.nav {
+  display: flex;
+  gap: var(--space-xs);
+  padding: var(--space-sm);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-item {
+  padding: var(--space-sm) var(--space-md);
+  color: var(--text-muted);
+  text-decoration: none;
+  text-transform: uppercase;
+  font-size: var(--font-size-sm);
+  letter-spacing: 1px;
+  border: 1px solid transparent;
+  transition: var(--transition-fast);
+}
+
+.nav-item:hover {
+  color: var(--text-secondary);
+  border-color: var(--border);
+}
+
+.nav-item.active {
+  color: var(--text-primary);
+  border-color: var(--primary);
+  text-shadow: var(--glow-text);
+}
+
+/* ============================================
+   Grid Layout
+   ============================================ */
+.grid {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+@media (max-width: 768px) {
+  .grid-2, .grid-3, .grid-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================
+   ASCII Decorations
+   ============================================ */
+.ascii-divider {
+  text-align: center;
+  color: var(--text-muted);
+  padding: var(--space-sm) 0;
+  font-size: var(--font-size-sm);
+}
+
+.ascii-divider::before {
+  content: '═══════════════════════════════════════════════════';
+}
+
+.ascii-header {
+  text-align: center;
+  padding: var(--space-md);
+  color: var(--text-secondary);
+}
+
+/* ============================================
+   Scrollbar
+   ============================================ */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border: 1px solid var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-dim);
+}
+
+/* ============================================
+   Animations
+   ============================================ */
+@keyframes typing {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-typing {
+  overflow: hidden;
+  white-space: nowrap;
+  animation: typing 2s steps(40, end);
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease;
+}
+
+.animate-pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* ============================================
+   Container
+   ============================================ */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-md);
+}
+
+.container-full {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============================================
+   Header
+   ============================================ */
+.header {
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-title {
+  font-size: var(--font-size-lg);
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: var(--text-primary);
+  text-shadow: var(--glow-text);
+}
+
+.header-subtitle {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}

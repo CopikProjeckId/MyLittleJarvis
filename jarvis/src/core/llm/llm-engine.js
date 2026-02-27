@@ -205,7 +205,9 @@ export class OllamaProvider extends LLMProvider {
           const data = JSON.parse(line);
           const content = data.message?.content;
           if (content) yield content;
-        } catch (e) {}
+        } catch (e) {
+          // Skip malformed JSON lines in stream - expected behavior
+        }
       }
     }
   }
@@ -251,10 +253,450 @@ export class AnthropicProvider extends LLMProvider {
       body
     });
 
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(`Anthropic API error: ${error.error?.message || response.status}`);
+    }
+
     const data = await response.json();
     return {
-      choices: [{ message: { content: data.content?.[0]?.text || '' } }]
+      choices: [{ message: { content: data.content?.[0]?.text || '' } }],
+      usage: data.usage
     };
+  }
+
+  async *streamComplete(messages, options = {}) {
+    const { temperature = 0.7, maxTokens = 4096 } = options;
+
+    const systemMessage = messages.find(m => m.role === 'system');
+    const anthropicMessages = messages
+      .filter(m => m.role !== 'system')
+      .map(m => ({ role: m.role, content: m.content }));
+
+    const response = await fetch(`${this.baseUrl}/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': this.apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: this.model,
+        messages: anthropicMessages,
+        system: systemMessage?.content,
+        temperature,
+        max_tokens: maxTokens,
+        stream: true
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Anthropic streaming error: ${response.status}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || !trimmed.startsWith('data:')) continue;
+
+        const data = trimmed.slice(5).trim();
+        if (data === '[DONE]') return;
+
+        try {
+          const event = JSON.parse(data);
+          if (event.type === 'content_block_delta' && event.delta?.text) {
+            yield event.delta.text;
+          }
+        } catch (e) {
+          // Skip parse errors in stream - expected behavior
+        }
+      }
+    }
+  }
+}
+
+// ============================================================
+// Google (Gemini) Provider
+// ============================================================
+
+export class GoogleProvider extends LLMProvider {
+  constructor(config = {}) {
+    super(config);
+    this.name = 'google';
+    this.apiKey = config.apiKey || process.env.GOOGLE_API_KEY;
+    this.baseUrl = config.baseUrl || 'https://generativelanguage.googleapis.com/v1beta';
+    this.model = config.model || 'gemini-2.0-flash';
+  }
+
+  async complete(messages, options = {}) {
+    const { temperature = 0.7, maxTokens = 4096 } = options;
+
+    // Convert to Gemini format
+    const contents = messages
+      .filter(m => m.role !== 'system')
+      .map(m => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: m.content }]
+      }));
+
+    const systemInstruction = messages.find(m => m.role === 'system');
+
+    const response = await fetch(
+      `${this.baseUrl}/models/${this.model}:generateContent?key=${this.apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents,
+          systemInstruction: systemInstruction ? { parts: [{ text: systemInstruction.content }] } : undefined,
+          generationConfig: {
+            temperature,
+            maxOutputTokens: maxTokens
+          }
+        })
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(`Google API error: ${error.error?.message || response.status}`);
+    }
+
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    return {
+      choices: [{ message: { content: text } }],
+      usage: { prompt_tokens: 0, completion_tokens: 0 }
+    };
+  }
+
+  async *streamComplete(messages, options = {}) {
+    const { temperature = 0.7, maxTokens = 4096 } = options;
+
+    const contents = messages
+      .filter(m => m.role !== 'system')
+      .map(m => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: m.content }]
+      }));
+
+    const systemInstruction = messages.find(m => m.role === 'system');
+
+    const response = await fetch(
+      `${this.baseUrl}/models/${this.model}:streamGenerateContent?key=${this.apiKey}&alt=sse`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents,
+          systemInstruction: systemInstruction ? { parts: [{ text: systemInstruction.content }] } : undefined,
+          generationConfig: { temperature, maxOutputTokens: maxTokens }
+        })
+      }
+    );
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (!line.startsWith('data:')) continue;
+        const data = line.slice(5).trim();
+        if (!data) continue;
+
+        try {
+          const parsed = JSON.parse(data);
+          const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text) yield text;
+        } catch (e) { /* skip */ }
+      }
+    }
+  }
+}
+
+// ============================================================
+// Groq Provider (Fast Inference)
+// ============================================================
+
+export class GroqProvider extends LLMProvider {
+  constructor(config = {}) {
+    super(config);
+    this.name = 'groq';
+    this.apiKey = config.apiKey || process.env.GROQ_API_KEY;
+    this.baseUrl = 'https://api.groq.com/openai/v1';
+    this.model = config.model || 'llama-3.3-70b-versatile';
+  }
+
+  async complete(messages, options = {}) {
+    const { temperature = 0.7, maxTokens = 4096 } = options;
+
+    const response = await fetch(`${this.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.apiKey}`
+      },
+      body: JSON.stringify({
+        model: this.model,
+        messages,
+        temperature,
+        max_tokens: maxTokens
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(`Groq API error: ${error.error?.message || response.status}`);
+    }
+
+    return await response.json();
+  }
+
+  async *streamComplete(messages, options = {}) {
+    const { temperature = 0.7, maxTokens = 4096 } = options;
+
+    const response = await fetch(`${this.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.apiKey}`
+      },
+      body: JSON.stringify({
+        model: this.model,
+        messages,
+        temperature,
+        max_tokens: maxTokens,
+        stream: true
+      })
+    });
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || !trimmed.startsWith('data:')) continue;
+        const data = trimmed.slice(5).trim();
+        if (data === '[DONE]') return;
+
+        try {
+          const parsed = JSON.parse(data);
+          const content = parsed.choices?.[0]?.delta?.content;
+          if (content) yield content;
+        } catch (e) { /* skip */ }
+      }
+    }
+  }
+}
+
+// ============================================================
+// OpenRouter Provider (Gateway to 200+ Models)
+// ============================================================
+
+export class OpenRouterProvider extends LLMProvider {
+  constructor(config = {}) {
+    super(config);
+    this.name = 'openrouter';
+    this.apiKey = config.apiKey || process.env.OPENROUTER_API_KEY;
+    this.baseUrl = 'https://openrouter.ai/api/v1';
+    this.model = config.model || 'anthropic/claude-3.5-sonnet';
+    this.siteUrl = config.siteUrl || 'https://jarvis.local';
+    this.siteName = config.siteName || 'JARVIS';
+  }
+
+  async complete(messages, options = {}) {
+    const { temperature = 0.7, maxTokens = 4096 } = options;
+
+    const response = await fetch(`${this.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.apiKey}`,
+        'HTTP-Referer': this.siteUrl,
+        'X-Title': this.siteName
+      },
+      body: JSON.stringify({
+        model: this.model,
+        messages,
+        temperature,
+        max_tokens: maxTokens
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(`OpenRouter API error: ${error.error?.message || response.status}`);
+    }
+
+    return await response.json();
+  }
+
+  async *streamComplete(messages, options = {}) {
+    const { temperature = 0.7, maxTokens = 4096 } = options;
+
+    const response = await fetch(`${this.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.apiKey}`,
+        'HTTP-Referer': this.siteUrl,
+        'X-Title': this.siteName
+      },
+      body: JSON.stringify({
+        model: this.model,
+        messages,
+        temperature,
+        max_tokens: maxTokens,
+        stream: true
+      })
+    });
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || !trimmed.startsWith('data:')) continue;
+        const data = trimmed.slice(5).trim();
+        if (data === '[DONE]') return;
+
+        try {
+          const parsed = JSON.parse(data);
+          const content = parsed.choices?.[0]?.delta?.content;
+          if (content) yield content;
+        } catch (e) { /* skip */ }
+      }
+    }
+  }
+
+  // List available models
+  async listModels() {
+    const response = await fetch(`${this.baseUrl}/models`, {
+      headers: { 'Authorization': `Bearer ${this.apiKey}` }
+    });
+    return await response.json();
+  }
+}
+
+// ============================================================
+// Mistral Provider
+// ============================================================
+
+export class MistralProvider extends LLMProvider {
+  constructor(config = {}) {
+    super(config);
+    this.name = 'mistral';
+    this.apiKey = config.apiKey || process.env.MISTRAL_API_KEY;
+    this.baseUrl = 'https://api.mistral.ai/v1';
+    this.model = config.model || 'mistral-large-latest';
+  }
+
+  async complete(messages, options = {}) {
+    const { temperature = 0.7, maxTokens = 4096 } = options;
+
+    const response = await fetch(`${this.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.apiKey}`
+      },
+      body: JSON.stringify({
+        model: this.model,
+        messages,
+        temperature,
+        max_tokens: maxTokens
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(`Mistral API error: ${error.error?.message || response.status}`);
+    }
+
+    return await response.json();
+  }
+
+  async *streamComplete(messages, options = {}) {
+    const { temperature = 0.7, maxTokens = 4096 } = options;
+
+    const response = await fetch(`${this.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.apiKey}`
+      },
+      body: JSON.stringify({
+        model: this.model,
+        messages,
+        temperature,
+        max_tokens: maxTokens,
+        stream: true
+      })
+    });
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || !trimmed.startsWith('data:')) continue;
+        const data = trimmed.slice(5).trim();
+        if (data === '[DONE]') return;
+
+        try {
+          const parsed = JSON.parse(data);
+          const content = parsed.choices?.[0]?.delta?.content;
+          if (content) yield content;
+        } catch (e) { /* skip */ }
+      }
+    }
   }
 }
 
@@ -267,7 +709,7 @@ export class LLMTaskEngine extends EventEmitter {
     super();
     this.providers = new Map();
     this.defaultProvider = options.defaultProvider || 'ollama';
-    this.fallbackChain = options.fallbackChain || ['ollama', 'openai', 'anthropic'];
+    this.fallbackChain = options.fallbackChain || ['ollama', 'groq', 'openai', 'google', 'anthropic', 'mistral', 'openrouter'];
     this.maxRetries = options.maxRetries || 3;
     this.timeout = options.timeout || 120000;
     this.tokenLimit = options.tokenLimit || 128000;
@@ -286,7 +728,21 @@ export class LLMTaskEngine extends EventEmitter {
     if (options.anthropic?.apiKey) {
       this.providers.set('anthropic', new AnthropicProvider(options.anthropic));
     }
-    
+
+    // New providers (OpenClaw-level)
+    if (options.google?.apiKey || process.env.GOOGLE_API_KEY) {
+      this.providers.set('google', new GoogleProvider(options.google || {}));
+    }
+    if (options.groq?.apiKey || process.env.GROQ_API_KEY) {
+      this.providers.set('groq', new GroqProvider(options.groq || {}));
+    }
+    if (options.openrouter?.apiKey || process.env.OPENROUTER_API_KEY) {
+      this.providers.set('openrouter', new OpenRouterProvider(options.openrouter || {}));
+    }
+    if (options.mistral?.apiKey || process.env.MISTRAL_API_KEY) {
+      this.providers.set('mistral', new MistralProvider(options.mistral || {}));
+    }
+
     // Default to ollama if no providers
     if (this.providers.size === 0) {
       this.providers.set('ollama', new OllamaProvider({}));

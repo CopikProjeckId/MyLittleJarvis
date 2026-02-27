@@ -449,7 +449,9 @@ export class MemoryEngine extends EventEmitter {
     // Delete from disk
     try {
       unlinkSync(join(this.storageDir, `${docId}.json`));
-    } catch (e) {}
+    } catch (e) {
+      // File may not exist on disk - non-critical
+    }
 
     this.emit('deleted', { docId });
     return true;
@@ -502,27 +504,34 @@ export class MemoryEngine extends EventEmitter {
         join(this.storageDir, `${doc.id}.json`),
         JSON.stringify(doc, null, 2)
       );
-    } catch (e) {}
+    } catch (e) {
+      console.warn(`Failed to save document ${doc.id}:`, e.message);
+    }
   }
 
   loadIndex() {
     try {
       if (!existsSync(this.storageDir)) return;
-      
+
       const files = readdirSync(this.storageDir).filter(f => f.endsWith('.json'));
-      
+
       for (const file of files) {
         try {
           const doc = JSON.parse(readFileSync(join(this.storageDir, file), 'utf-8'));
           this.documents.set(doc.id, doc);
-        } catch (e) {}
+        } catch (e) {
+          // Skip corrupted document files
+          console.warn(`Failed to load document ${file}:`, e.message);
+        }
       }
-      
+
       // Rebuild vector store
       for (const [id, doc] of this.documents) {
         // Would load from disk in production
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn('Failed to load memory index:', e.message);
+    }
   }
 
   generateId(content) {

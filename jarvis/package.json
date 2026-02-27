@@ -1,20 +1,20 @@
 {
-  "name": "jarvis-cli",
+  "name": "mylittle-jarvis",
   "version": "2.0.0",
-  "description": "JARVIS CLI - OpenClaw-Level AI Assistant",
+  "description": "MyLittle JARVIS - Personal AI Assistant with 3-Agent System (Ollama + Claude)",
   "main": "cli.js",
+  "bin": {
+    "jarvis": "./cli.js",
+    "mylittle-jarvis": "./cli.js"
+  },
   "type": "module",
   "scripts": {
     "start": "node cli.js",
-    "cli": "node cli.js",
+    "setup": "node cli.js --setup",
+    "gateway": "node -e \"import('./src/gateway/gateway.js').then(m => m.Gateway.create().then(g => g.start()))\"",
     "telegram": "node src/telegram/bot.js",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "test:watch": "npm test -- --watch",
-    "lint": "echo 'Linting...'",
-    "lint:fix": "echo 'Fixing...'",
-    "docker:build": "docker build -t jarvis-cli .",
-    "docker:run": "docker run -p 18789:18789 jarvis-cli",
-    "docker:compose": "docker-compose up -d"
+    "docker:build": "docker build -t mylittle-jarvis -f docker/Dockerfile .",
+    "docker:run": "docker run -p 18789:18789 mylittle-jarvis"
   },
   "dependencies": {
     "@slack/bolt": "^3.17.0",
@@ -22,14 +22,40 @@
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "grammy": "^1.19.0",
-    "readline-sync": "^1.4.10",
-    "uuid": "^9.0.1",
     "ws": "^8.16.0"
-  },
-  "devDependencies": {
-    "jest": "^29.7.0"
   },
   "engines": {
     "node": ">=18.0.0"
-  }
+  },
+  "author": "NINEBIX inc. <sobdi90@9bix.com> (https://9bix.com)",
+  "license": "SEE LICENSE IN LICENSE",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CopikProjeckId/jarvis-2flow.git"
+  },
+  "homepage": "https://github.com/CopikProjeckId/jarvis-2flow#readme",
+  "bugs": {
+    "url": "https://github.com/CopikProjeckId/jarvis-2flow/issues"
+  },
+  "keywords": [
+    "jarvis",
+    "ai-assistant",
+    "llm",
+    "ollama",
+    "claude",
+    "chatbot",
+    "cli",
+    "3-agent",
+    "personal-assistant"
+  ],
+  "files": [
+    "cli.js",
+    "src/",
+    "pwa/",
+    "docs/",
+    "scripts/",
+    "docker/",
+    "README.md",
+    "LICENSE"
+  ]
 }

@@ -1,0 +1,148 @@
+{
+  "name": "vscode-jarvis",
+  "displayName": "JARVIS AI Assistant",
+  "description": "Local AI assistant with 50+ tools, code editing, and smart completions",
+  "version": "1.0.0",
+  "publisher": "jarvis",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets",
+    "Other"
+  ],
+  "keywords": [
+    "ai",
+    "assistant",
+    "code",
+    "completion",
+    "jarvis",
+    "ollama"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "jarvis.chat",
+        "title": "JARVIS: Open Chat"
+      },
+      {
+        "command": "jarvis.explain",
+        "title": "JARVIS: Explain Selection"
+      },
+      {
+        "command": "jarvis.fix",
+        "title": "JARVIS: Fix Errors"
+      },
+      {
+        "command": "jarvis.refactor",
+        "title": "JARVIS: Refactor Selection"
+      },
+      {
+        "command": "jarvis.complete",
+        "title": "JARVIS: Complete Code"
+      },
+      {
+        "command": "jarvis.setGateway",
+        "title": "JARVIS: Set Gateway URL"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "jarvis.chat",
+        "key": "ctrl+shift+j",
+        "mac": "cmd+shift+j"
+      },
+      {
+        "command": "jarvis.explain",
+        "key": "ctrl+shift+e",
+        "mac": "cmd+shift+e",
+        "when": "editorHasSelection"
+      },
+      {
+        "command": "jarvis.fix",
+        "key": "ctrl+shift+f",
+        "mac": "cmd+shift+f",
+        "when": "editorHasSelection"
+      }
+    ],
+    "configuration": {
+      "title": "JARVIS",
+      "properties": {
+        "jarvis.gatewayUrl": {
+          "type": "string",
+          "default": "http://localhost:18789",
+          "description": "JARVIS Gateway URL"
+        },
+        "jarvis.token": {
+          "type": "string",
+          "default": "",
+          "description": "Authentication token (optional)"
+        },
+        "jarvis.autoComplete": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable AI-powered code completion"
+        }
+      }
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "command": "jarvis.explain",
+          "when": "editorHasSelection",
+          "group": "jarvis"
+        },
+        {
+          "command": "jarvis.fix",
+          "when": "editorHasSelection",
+          "group": "jarvis"
+        },
+        {
+          "command": "jarvis.refactor",
+          "when": "editorHasSelection",
+          "group": "jarvis"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "jarvis",
+          "title": "JARVIS",
+          "icon": "$(hubot)"
+        }
+      ]
+    },
+    "views": {
+      "jarvis": [
+        {
+          "type": "webview",
+          "id": "jarvis.chatView",
+          "name": "Chat"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.80.0",
+    "@vscode/vsce": "^2.22.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "ws": "^8.16.0"
+  }
+}

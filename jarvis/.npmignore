@@ -1,0 +1,42 @@
+# Development files
+tests/
+coverage/
+*.test.js
+
+# Config (user creates their own)
+config/
+data/
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Environment
+.env
+.env.*
+!.env.sample
+
+# IDE
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+
+# OS
+*.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Lock files (users generate their own)
+package-lock.json
+
+# VSCode Extension (install separately via .vsix)
+vscode-jarvis/node_modules/
+vscode-jarvis/out/
+vscode-jarvis/*.vsix
+vscode-jarvis/package-lock.json
