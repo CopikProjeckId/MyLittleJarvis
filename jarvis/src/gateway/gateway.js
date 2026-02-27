@@ -4,10 +4,15 @@
 import express from 'express';
 import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { SimpleAuth } from '../core/security/simple-auth.js';
 import { RateLimiter } from '../core/security/rate-limiter.js';
 import { ConfigLoader } from '../core/config/config-loader.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const PKG_ROOT = join(__dirname, '..', '..');  // jarvis/ package root
 
 export class Gateway {
   constructor(options = {}) {
@@ -178,6 +183,16 @@ export class Gateway {
         });
       } else {
         res.json({ status: 'initializing', gateway: this.getStatus() });
+      }
+    });
+
+    // Clear context
+    this.app.post('/api/clear', (req, res) => {
+      if (this.jarvis?.clearContext) {
+        this.jarvis.clearContext();
+        res.json({ success: true });
+      } else {
+        res.status(500).json({ error: 'Not available' });
       }
     });
 
@@ -464,13 +479,14 @@ Return ONLY the refactored code.`;
       }
     });
 
-    // Static files (PWA)
-    this.app.use(express.static(join(process.cwd(), 'pwa')));
+    // Static files (PWA) - use package root, not process.cwd()
+    const pwaDir = join(PKG_ROOT, 'pwa');
+    this.app.use(express.static(pwaDir));
 
     // Fallback for SPA
     this.app.get('*', (req, res) => {
       if (req.accepts('html')) {
-        res.sendFile(join(process.cwd(), 'pwa', 'index.html'));
+        res.sendFile(join(pwaDir, 'index.html'));
       } else {
         res.status(404).json({ error: 'Not found' });
       }

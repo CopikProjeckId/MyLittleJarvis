@@ -9,9 +9,13 @@
   },
   "type": "module",
   "scripts": {
-    "start": "node cli.js",
+    "start": "node cli.js start",
+    "chat": "node cli.js",
+    "stop": "node cli.js stop",
+    "restart": "node cli.js restart",
+    "status": "node cli.js status",
     "setup": "node cli.js --setup",
-    "gateway": "node -e \"import('./src/gateway/gateway.js').then(m => m.Gateway.create().then(g => g.start()))\"",
+    "service": "node service.js",
     "telegram": "node src/telegram/bot.js",
     "docker:build": "docker build -t mylittle-jarvis -f docker/Dockerfile .",
     "docker:run": "docker run -p 18789:18789 mylittle-jarvis"
@@ -50,6 +54,7 @@
   ],
   "files": [
     "cli.js",
+    "service.js",
     "src/",
     "pwa/",
     "docs/",

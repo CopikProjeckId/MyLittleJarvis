@@ -1,44 +1,63 @@
 #!/usr/bin/env node
 
-// JARVIS CLI - Interactive Terminal Interface
-// OpenClaw-style with interactive setup wizard
+// JARVIS CLI - Interactive Terminal Client
+// Architecture: Background service (gateway+channels+agent) + CLI client (chat window)
+// CLI connects to running service via WebSocket. Closing CLI does NOT stop JARVIS.
 
-import { Jarvis3Agent } from './src/core/jarvis-3agent.js';
-import { Gateway } from './src/gateway/gateway.js';
-import { ConfigLoader } from './src/core/config/config-loader.js';
+import { DaemonManager } from './src/core/daemon.js';
 import { runSetup } from './src/cli/setup-wizard.js';
 import { createInterface } from 'readline';
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
 import { initI18n, t, tf } from './src/i18n/index.js';
+import WebSocket from 'ws';
 
 class JarvisTerminal {
   constructor() {
-    this.jarvis = null;
-    this.agent = null;
-    this.gateway = null;
+    this.daemon = new DaemonManager();
+    this.ws = null;
     this.config = null;
-    this.configLoader = null;
-    this.isInteractive = true;
-    this.channels = new Map(); // Active channel connections
+    this.configPath = join(homedir(), '.jarvis', 'jarvis.json');
+    this.port = 18789;
+    this.rl = null;
+    this.pendingResolve = null;  // For awaiting WS response
+    this.connected = false;
   }
 
   async start() {
-    // Check for command line arguments
     const args = process.argv.slice(2);
 
-    // Pre-load language from config if exists
-    const configPath = join(homedir(), '.jarvis', 'jarvis.json');
-    if (existsSync(configPath)) {
-      try {
-        const cfg = JSON.parse(readFileSync(configPath, 'utf-8'));
-        if (cfg.language) {
-          initI18n(cfg.language);
-        }
-      } catch {}
+    // Pre-load language
+    this.loadConfig();
+
+    // === Daemon commands ===
+    if (args.includes('start')) {
+      await this.cmdStart();
+      return;
     }
 
+    if (args.includes('stop')) {
+      await this.cmdStop();
+      return;
+    }
+
+    if (args.includes('restart')) {
+      await this.cmdRestart();
+      return;
+    }
+
+    if (args.includes('status')) {
+      await this.cmdStatus();
+      return;
+    }
+
+    if (args.includes('logs')) {
+      await this.cmdLogs();
+      return;
+    }
+
+    // === Setup / Help / Version ===
     if (args.includes('--setup') || args.includes('setup')) {
       await runSetup(false);
       return;
@@ -55,317 +74,336 @@ class JarvisTerminal {
     }
 
     if (args.includes('--version') || args.includes('-v')) {
-      console.log('MyLittle JARVIS v2.0.0');
+      console.log('MyLittle JARVIS v2.0.1');
       return;
     }
 
+    // === Interactive mode (client) ===
+    await this.startInteractive();
+  }
+
+  loadConfig() {
+    if (existsSync(this.configPath)) {
+      try {
+        this.config = JSON.parse(readFileSync(this.configPath, 'utf-8'));
+        if (this.config.language) initI18n(this.config.language);
+        this.port = this.config.gateway?.port || 18789;
+      } catch {}
+    }
+  }
+
+  // ========================================
+  // Daemon commands
+  // ========================================
+
+  async cmdStart() {
+    if (this.daemon.isRunning()) {
+      const pid = this.daemon.getPid();
+      console.log(`✅ JARVIS is already running (PID: ${pid})`);
+      console.log(`   Gateway: http://127.0.0.1:${this.port}`);
+      console.log(`   PWA: http://127.0.0.1:${this.port}/chat.html`);
+      console.log('   Run "jarvis" to open chat window');
+      return;
+    }
+
+    // First run check
+    if (!existsSync(this.configPath)) {
+      console.log('🆕 First run detected! Running setup first...\n');
+      await runSetup(false);
+      console.log('\nSetup complete! Starting JARVIS...\n');
+      this.loadConfig();
+    }
+
+    console.log('🚀 Starting JARVIS service...');
+    const result = await this.daemon.start();
+
+    if (result.success) {
+      console.log(`✅ JARVIS started (PID: ${result.pid})`);
+      console.log(`   Gateway: http://127.0.0.1:${this.port}`);
+      console.log(`   PWA: http://127.0.0.1:${this.port}/chat.html`);
+      console.log(`   Logs: ${result.logFile}`);
+      console.log('');
+      console.log('   Run "jarvis" to open chat window');
+      console.log('   Run "jarvis stop" to stop the service');
+    } else {
+      console.log(`❌ ${result.error}`);
+      if (result.logFile) {
+        console.log(`   Check logs: ${result.logFile}`);
+        const logs = this.daemon.getLogs(5);
+        if (logs.length > 0) {
+          console.log('\n   Recent logs:');
+          logs.forEach(l => console.log(`   ${l}`));
+        }
+      }
+    }
+  }
+
+  async cmdStop() {
+    if (!this.daemon.isRunning()) {
+      console.log('⚠️  JARVIS is not running');
+      return;
+    }
+
+    console.log('🛑 Stopping JARVIS service...');
+    const result = await this.daemon.stop();
+
+    if (result.success) {
+      console.log(`✅ JARVIS stopped (PID: ${result.pid})${result.forced ? ' (forced)' : ''}`);
+    } else {
+      console.log(`❌ ${result.error}`);
+    }
+  }
+
+  async cmdRestart() {
+    if (this.daemon.isRunning()) {
+      console.log('🔄 Restarting JARVIS service...');
+      await this.daemon.stop();
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    await this.cmdStart();
+  }
+
+  async cmdStatus() {
+    const status = await this.daemon.status();
+
+    if (status.running) {
+      console.log(`✅ JARVIS is running (PID: ${status.pid})`);
+      if (status.gateway) {
+        console.log(`   Gateway: http://127.0.0.1:${status.gateway.port} (${status.gateway.status})`);
+        if (status.gateway.uptime) {
+          const uptime = Math.floor(status.gateway.uptime);
+          const hours = Math.floor(uptime / 3600);
+          const mins = Math.floor((uptime % 3600) / 60);
+          const secs = uptime % 60;
+          console.log(`   Uptime: ${hours}h ${mins}m ${secs}s`);
+        }
+      }
+    } else {
+      console.log('❌ JARVIS is not running');
+      console.log('   Run "jarvis start" to start the service');
+    }
+  }
+
+  async cmdLogs() {
+    const lines = this.daemon.getLogs(30);
+    if (lines.length === 0) {
+      console.log('No logs found');
+    } else {
+      lines.forEach(l => console.log(l));
+    }
+  }
+
+  // ========================================
+  // Interactive mode (WebSocket client)
+  // ========================================
+
+  async startInteractive() {
     console.clear();
     this.printBanner();
 
-    // Load config from ~/.jarvis/jarvis.json
-    this.configLoader = new ConfigLoader();
-
-    // Check if first run (no config file)
-    if (!existsSync(configPath)) {
-      console.log(t('welcome.firstRun') + '\n');
-
-      const answer = await this.askQuestion(t('welcome.setupPrompt'));
-      if (answer.toLowerCase() !== 'n') {
-        await runSetup(false);
-
-        // Reload config after setup
-        console.log('\n' + t('welcome.setupComplete') + '\n');
-      }
-    }
-
-    // Load or create config
-    this.config = await this.configLoader.init();
-
-    // Initialize i18n with config language
-    if (this.config.language) {
-      initI18n(this.config.language);
-    }
-
-    // Start config file watcher for hot reload
-    this.configLoader.startWatching();
-    this.configLoader.on('reloaded', ({ newConfig }) => {
-      console.log('\n' + t('welcome.configChanged') + '\n');
-      this.config = newConfig;
-    });
-
-    // Check environment
-    console.log(t('environment.checking') + '\n');
-    const envCheck = await this.checkEnvironment();
-
-    if (!envCheck.ollama) {
-      console.log(t('environment.ollamaNotRunning'));
-      console.log(t('environment.ollamaStartHint'));
-      console.log(t('environment.ollamaServe') + '\n');
-      console.log(t('environment.modelInstallHint') + '\n');
-
-      const answer = await this.askQuestion(t('environment.continueWithoutOllama'));
-      if (answer.toLowerCase() !== 'y') {
-        console.log('\n' + t('environment.comeBackLater'));
-        process.exit(0);
-      }
-    } else {
-      console.log(t('environment.ollamaConnected'));
-      if (envCheck.models.length > 0) {
-        const modelStr = envCheck.models.slice(0, 3).join(', ') + (envCheck.models.length > 3 ? '...' : '');
-        console.log(tf('environment.models', { models: modelStr }));
-      }
-    }
-
-    // Initialize Agent system
-    console.log('\n' + t('init.initializing'));
-
-    // Mode configuration
-    const mode = this.config.mode || this.config.models?.mode || 'simple';
-    const isSimpleMode = mode === 'simple';
-
-    // Model configuration (env vars override config file)
-    const ollamaHost = process.env.OLLAMA_HOST || this.config.ollama?.host || 'http://localhost:11434';
-    const ollamaApiKey = process.env.OLLAMA_API_KEY || this.config.ollama?.apiKey;
-    const orchestratorModel = process.env.JARVIS_ORCHESTRATOR_MODEL || this.config.models?.orchestrator || 'qwen3:1.7b';
-    const assistantModel = process.env.JARVIS_ASSISTANT_MODEL || this.config.models?.assistant || 'qwen3:8b';
-    const fallbackModel = this.config.models?.fallback?.[0] || assistantModel;
-
-    // Display mode info
-    if (isSimpleMode) {
-      console.log(t('init.modeSimple'));
-      console.log(tf('init.model', { model: assistantModel }));
-    } else {
-      console.log(t('init.mode3Agent'));
-      console.log(tf('init.orchestrator', { model: orchestratorModel }));
-      console.log(tf('init.assistant', { model: assistantModel }));
-    }
-    console.log(tf('init.ollamaHost', { host: ollamaHost }));
-    if (ollamaApiKey) console.log(tf('init.apiKey', { key: ollamaApiKey.slice(-4) }));
-
-    this.agent = new Jarvis3Agent({
-      mode: mode,
-      orchestrator: {
-        model: orchestratorModel,
-        baseUrl: ollamaHost,
-        apiKey: ollamaApiKey,
-        patternOnly: isSimpleMode  // Simple mode: pattern routing only
-      },
-      assistant: {
-        model: assistantModel,
-        fallbackModel: fallbackModel,
-        baseUrl: ollamaHost,
-        apiKey: ollamaApiKey
-      }
-    });
-
-    // Start Gateway
-    if (this.config.gateway?.enabled !== false) {
-      try {
-        this.gateway = await Gateway.create({
-          port: this.config.gateway?.port || 18789,
-          host: '127.0.0.1',
-          config: this.config
-        });
-        this.gateway.setJarvis(this.agent);
-        await this.gateway.start();
-
-        const port = this.config.gateway?.port || 18789;
-        const authStatus = this.gateway.auth.getStatus();
-        console.log(tf('init.gatewayOk', { port }));
-        console.log(tf('init.pwa', { port }));
-        console.log(tf('init.auth', { type: authStatus.tokenConfigured ? 'token' : 'none', local: authStatus.allowLocal }));
-      } catch (error) {
-        console.log(tf('init.gatewayFailed', { error: error.message }));
-        // Create fallback gateway without config loader
-        try {
-          this.gateway = new Gateway({
-            port: this.config.gateway?.port || 18789,
-            host: '127.0.0.1',
-            config: this.config
-          });
-          this.gateway.setJarvis(this.agent);
-          await this.gateway.start();
-        } catch (e) {
-          console.log(tf('init.gatewayFullFail', { error: e.message }));
+    // Check if service is running, auto-start if not
+    if (!this.daemon.isRunning()) {
+      // First run check
+      if (!existsSync(this.configPath)) {
+        console.log(t('welcome.firstRun') + '\n');
+        const answer = await this.askQuestion(t('welcome.setupPrompt'));
+        if (answer.toLowerCase() !== 'n') {
+          await runSetup(false);
+          console.log('\n' + t('welcome.setupComplete') + '\n');
+          this.loadConfig();
         }
       }
+
+      console.log('🚀 Starting JARVIS service...');
+      const result = await this.daemon.start();
+
+      if (!result.success) {
+        console.log(`❌ Failed to start service: ${result.error}`);
+        if (result.logFile) {
+          const logs = this.daemon.getLogs(5);
+          if (logs.length > 0) {
+            console.log('\nRecent logs:');
+            logs.forEach(l => console.log(`  ${l}`));
+          }
+        }
+        process.exit(1);
+      }
+
+      console.log(`✅ Service started (PID: ${result.pid})`);
+
+      // Wait a bit for gateway to be ready
+      await this.waitForGateway(10000);
+    } else {
+      console.log(`✅ JARVIS service running (PID: ${this.daemon.getPid()})`);
     }
 
-    // Start configured channels (Telegram, Discord, Slack)
-    await this.startChannels();
-
-    // Health check
-    const health = await this.agent.healthCheck();
-    console.log('\n' + t('status.title'));
-    console.log(tf('status.ollama', { status: health.ollama === 'available' ? '✅' : '❌' }));
-    console.log(tf('status.claude', { status: health.claude === 'configured' ? '✅' : '❌ ' + t('status.optional') }));
-
-    // Show channel status
-    if (this.channels.size > 0) {
-      console.log(`   Channels: ${Array.from(this.channels.keys()).join(', ')} ✅`);
+    // Connect to gateway via WebSocket
+    const connected = await this.connectWebSocket();
+    if (!connected) {
+      console.log('❌ Cannot connect to JARVIS gateway');
+      console.log(`   Check: http://127.0.0.1:${this.port}/health`);
+      process.exit(1);
     }
+
+    console.log(`🔗 Connected to gateway (ws://127.0.0.1:${this.port})`);
+
+    // Fetch status from service
+    await this.fetchServiceStatus();
 
     console.log('\n' + '─'.repeat(50));
     console.log(t('help.hint'));
+    console.log('   Ctrl+C: Close chat window (service keeps running)');
     console.log('─'.repeat(50) + '\n');
 
-    // Start interactive loop
     this.runLoop();
   }
 
-  async startChannels() {
-    const channelConfig = this.config.channels || {};
-
-    // Create message handler that wraps the agent
-    const createHandler = (channelName) => async (text) => {
+  async waitForGateway(timeoutMs) {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
       try {
-        const response = await this.agent.process(text);
-        if (response.error) {
-          return `❌ ${response.error}`;
+        const response = await fetch(`http://127.0.0.1:${this.port}/health`, {
+          signal: AbortSignal.timeout(1000)
+        });
+        if (response.ok) return true;
+      } catch {}
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    return false;
+  }
+
+  connectWebSocket() {
+    return new Promise((resolve) => {
+      const timeout = setTimeout(() => {
+        resolve(false);
+      }, 5000);
+
+      try {
+        this.ws = new WebSocket(`ws://127.0.0.1:${this.port}`);
+
+        this.ws.on('open', () => {
+          this.connected = true;
+        });
+
+        this.ws.on('message', (data) => {
+          try {
+            const msg = JSON.parse(data.toString());
+            this.handleWsMessage(msg);
+
+            // Resolve connection on first 'connected' message
+            if (msg.type === 'connected') {
+              clearTimeout(timeout);
+              resolve(true);
+            }
+          } catch {}
+        });
+
+        this.ws.on('close', () => {
+          this.connected = false;
+          if (this.pendingResolve) {
+            this.pendingResolve({ error: 'Connection lost' });
+            this.pendingResolve = null;
+          }
+          // Don't exit - try to reconnect
+          console.log('\n⚠️  Connection to JARVIS lost. Service may still be running.');
+          console.log('   Run "jarvis" to reconnect or "jarvis status" to check.\n');
+          if (this.rl) this.rl.close();
+          process.exit(0);
+        });
+
+        this.ws.on('error', () => {
+          clearTimeout(timeout);
+          resolve(false);
+        });
+      } catch {
+        clearTimeout(timeout);
+        resolve(false);
+      }
+    });
+  }
+
+  handleWsMessage(msg) {
+    switch (msg.type) {
+      case 'connected':
+        // Auth may be auto-handled for local connections
+        break;
+
+      case 'chat':
+        if (this.pendingResolve) {
+          this.pendingResolve(msg);
+          this.pendingResolve = null;
         }
-        return response.response;
-      } catch (error) {
-        console.error(`[${channelName}] Error:`, error.message);
-        return `❌ Error: ${error.message}`;
-      }
-    };
+        break;
 
-    // Telegram
-    if (channelConfig.telegram?.enabled && channelConfig.telegram?.token) {
-      try {
-        const { TelegramBot } = await import('./src/telegram/bot.js');
-        const bot = new TelegramBot({
-          token: channelConfig.telegram.token,
-          allowedUsers: channelConfig.telegram.allowedUsers || []
-        });
-        bot.setMessageHandler(createHandler('Telegram'));
+      case 'status':
+        if (this.pendingResolve) {
+          this.pendingResolve(msg);
+          this.pendingResolve = null;
+        }
+        break;
 
-        // Handle /clear command
-        bot.on('clear', () => {
-          this.agent.clearContext();
-        });
-
-        await bot.start();
-        this.channels.set('telegram', bot);
-        console.log('   📱 Telegram: Connected');
-      } catch (error) {
-        console.log(`   📱 Telegram: Failed (${error.message})`);
-      }
-    }
-
-    // Discord
-    if (channelConfig.discord?.enabled && channelConfig.discord?.token) {
-      try {
-        const { DiscordChannel } = await import('./src/channels/discord.js');
-        const bot = new DiscordChannel({
-          token: channelConfig.discord.token,
-          prefix: channelConfig.discord.prefix || '/'
-        });
-        bot.onMessage(createHandler('Discord'));
-        await bot.start();
-        this.channels.set('discord', bot);
-        console.log('   🎮 Discord: Connected');
-      } catch (error) {
-        console.log(`   🎮 Discord: Failed (${error.message})`);
-      }
-    }
-
-    // Slack
-    if (channelConfig.slack?.enabled && channelConfig.slack?.token) {
-      try {
-        const { SlackChannel } = await import('./src/channels/slack.js');
-        const bot = new SlackChannel({
-          token: channelConfig.slack.token,
-          signingSecret: channelConfig.slack.signingSecret
-        });
-        bot.onMessage(createHandler('Slack'));
-        await bot.start();
-        this.channels.set('slack', bot);
-        console.log('   💼 Slack: Connected');
-      } catch (error) {
-        console.log(`   💼 Slack: Failed (${error.message})`);
-      }
+      case 'error':
+        if (this.pendingResolve) {
+          this.pendingResolve({ error: msg.error });
+          this.pendingResolve = null;
+        } else {
+          console.log(`\n❌ ${msg.error}`);
+        }
+        break;
     }
   }
 
-  printBanner() {
-    console.log(`
-    ╔═══════════════════════════════════════════════════════════════════╗
-    ║                                                                   ║
-    ║   ███╗   ███╗██╗   ██╗    ██╗     ██╗████████╗████████╗██╗        ║
-    ║   ████╗ ████║╚██╗ ██╔╝    ██║     ██║╚══██╔══╝╚══██╔══╝██║        ║
-    ║   ██╔████╔██║ ╚████╔╝     ██║     ██║   ██║      ██║   ██║        ║
-    ║   ██║╚██╔╝██║  ╚██╔╝      ██║     ██║   ██║      ██║   ██║        ║
-    ║   ██║ ╚═╝ ██║   ██║       ███████╗██║   ██║      ██║   ███████╗   ║
-    ║   ╚═╝     ╚═╝   ╚═╝       ╚══════╝╚═╝   ╚═╝      ╚═╝   ╚══════╝   ║
-    ║                                                                   ║
-    ║            ╦╔═╗╦═╗╦  ╦╦╔═╗  🤖 v2.0.0                              ║
-    ║            ║╠═╣╠╦╝╚╗╔╝║╚═╗  3-Agent AI Assistant                  ║
-    ║           ╚╝╩ ╩╩╚═ ╚╝ ╩╚═╝  Ollama + Claude                       ║
-    ║                                                                   ║
-    ╚═══════════════════════════════════════════════════════════════════╝
-    `);
+  async sendAndWait(message, timeoutMs = 120000) {
+    return new Promise((resolve) => {
+      const timeout = setTimeout(() => {
+        this.pendingResolve = null;
+        resolve({ error: 'Response timeout' });
+      }, timeoutMs);
+
+      this.pendingResolve = (response) => {
+        clearTimeout(timeout);
+        resolve(response);
+      };
+
+      this.ws.send(JSON.stringify(message));
+    });
   }
 
-  printHelp() {
-    console.log(`
-🤖 MyLittle JARVIS v2.0.0
-
-${t('help.usage')}
-${t('help.usageCommand')}
-
-${t('help.options')}
-${t('help.optSetup')}
-${t('help.optQuickSetup')}
-${t('help.optHelp')}
-${t('help.optVersion')}
-
-${t('help.configFileLabel')}
-  ~/.jarvis/jarvis.json
-
-${t('help.examples')}
-${t('help.exampleInteractive')}
-${t('help.exampleSetup')}
-`);
-  }
-
-  async checkEnvironment() {
-    const result = { ollama: false, models: [] };
-
+  async fetchServiceStatus() {
     try {
-      const ollamaHost = this.config?.ollama?.host || process.env.OLLAMA_HOST || 'http://localhost:11434';
-      const headers = {};
-
-      if (this.config?.ollama?.apiKey) {
-        headers['Authorization'] = `Bearer ${this.config.ollama.apiKey}`;
-      }
-
-      const response = await fetch(`${ollamaHost}/api/tags`, {
-        headers,
+      const response = await fetch(`http://127.0.0.1:${this.port}/api/status`, {
         signal: AbortSignal.timeout(3000)
       });
-
       if (response.ok) {
-        result.ollama = true;
-        const data = await response.json();
-        result.models = data.models?.map(m => m.name) || [];
+        const status = await response.json();
+        console.log('\n' + t('status.title'));
+        console.log(`   Orchestrator: ${status.orchestrator || 'ready'}`);
+        console.log(`   Assistant: ${status.assistant || 'ready'}`);
+        if (status.claude) {
+          console.log(`   Claude: ${status.claude}`);
+        }
+        if (status.gateway) {
+          console.log(`   Gateway: port ${status.gateway.port}, ${status.gateway.clients || 0} clients`);
+        }
       }
-    } catch (error) {
-      // Ollama not available
+    } catch {
+      // Silently fail
     }
-
-    return result;
   }
 
+  // ========================================
+  // Interactive loop (client-side)
+  // ========================================
+
   runLoop() {
-    const rl = createInterface({
+    this.rl = createInterface({
       input: process.stdin,
       output: process.stdout,
       terminal: true
     });
 
     const prompt = () => {
-      rl.question('🎯 ', async (input) => {
+      this.rl.question('🎯 ', async (input) => {
         const trimmed = input.trim();
 
         if (!trimmed) {
@@ -375,26 +413,29 @@ ${t('help.exampleSetup')}
 
         // Handle commands
         if (trimmed.startsWith('/')) {
-          const shouldContinue = await this.handleCommand(trimmed.substring(1), rl);
+          const shouldContinue = await this.handleCommand(trimmed.substring(1));
           if (shouldContinue !== false) {
             prompt();
           }
           return;
         }
 
-        // Chat with 3-Agent system
+        // Send to service via WebSocket
         try {
           process.stdout.write('🤖 ');
 
-          const response = await this.agent.process(trimmed);
+          const response = await this.sendAndWait({
+            type: 'chat',
+            data: { message: trimmed }
+          });
 
           if (response.error) {
             console.log(`\n❌ ${response.error}`);
           } else {
-            console.log(response.response);
+            console.log(response.response || response.data);
           }
 
-          // Show which agent handled it
+          // Show agent info
           if (response.agent && response.agent !== 'orchestrator') {
             console.log(`\n   [${response.agent}${response.duration ? ` · ${response.duration}ms` : ''}]`);
           }
@@ -411,7 +452,7 @@ ${t('help.exampleSetup')}
     prompt();
   }
 
-  async handleCommand(cmd, rl) {
+  async handleCommand(cmd) {
     const [command, ...rest] = cmd.split(' ');
 
     switch (command.toLowerCase()) {
@@ -427,74 +468,108 @@ ${t('help.commands')}
    /config        - ${t('help.configDesc')}
    /clear, /c     - ${t('help.clearDesc')}
    /models        - ${t('help.modelsDesc')}
-   /exit, /q      - ${t('help.exitDesc')}
+   /logs          - Show service logs
+   /close         - Close chat window (service keeps running)
+   /exit, /q      - Close chat window (service keeps running)
+   /shutdown      - Stop JARVIS service completely
 `);
         break;
 
       case 'setup':
         console.log('\n' + t('commands.startingSetup') + '\n');
-        rl.close();
+        if (this.rl) this.rl.close();
         await runSetup(false);
         console.log('\n' + t('commands.restartRequired'));
+        console.log('Run "jarvis restart" to apply changes.');
         process.exit(0);
 
       case 'config':
-        console.log('\n' + t('commands.currentConfig'));
-        console.log(tf('commands.configFile', { path: this.configLoader.configPath }));
-        console.log(tf('commands.ollamaConfig', { host: this.config.ollama?.host || 'localhost:11434' }));
-        console.log(tf('commands.gatewayConfig', { port: this.config.gateway?.port || 18789 }));
-        console.log(tf('commands.orchestratorConfig', { model: this.config.models?.orchestrator || 'default' }));
-        console.log(tf('commands.assistantConfig', { model: this.config.models?.assistant || 'default' }));
-        console.log(tf('commands.telegramConfig', { status: this.config.channels?.telegram?.enabled ? t('commands.enabled') : t('commands.disabled') }));
-        console.log(tf('commands.discordConfig', { status: this.config.channels?.discord?.enabled ? t('commands.enabled') : t('commands.disabled') }));
-        console.log('');
+        try {
+          const response = await fetch(`http://127.0.0.1:${this.port}/api/config`, {
+            signal: AbortSignal.timeout(3000)
+          });
+          if (response.ok) {
+            const cfg = await response.json();
+            console.log('\n' + t('commands.currentConfig'));
+            console.log(`   Config: ${this.configPath}`);
+            console.log(`   Ollama: ${cfg.ollama?.host || 'localhost:11434'}`);
+            console.log(`   Gateway: port ${cfg.gateway?.port || 18789}`);
+            console.log(`   Mode: ${cfg.mode || cfg.models?.mode || 'simple'}`);
+            console.log(`   Orchestrator: ${cfg.models?.orchestrator || 'default'}`);
+            console.log(`   Assistant: ${cfg.models?.assistant || 'default'}`);
+            console.log(`   Telegram: ${cfg.channels?.telegram?.enabled ? '✅' : '❌'}`);
+            console.log(`   Discord: ${cfg.channels?.discord?.enabled ? '✅' : '❌'}`);
+            console.log(`   Slack: ${cfg.channels?.slack?.enabled ? '✅' : '❌'}`);
+            console.log('');
+          }
+        } catch {
+          console.log('❌ Cannot fetch config from service\n');
+        }
         break;
 
       case 'status':
       case 's':
-        const status = this.agent.getStatus();
-        const health = await this.agent.healthCheck();
-        console.log(`
-${t('status.jarvisStatus')}
-   Orchestrator: ${status.orchestrator}
-   Assistant: ${status.assistant}
-   Claude: ${status.claude}
-${tf('status.contextMessages', { count: status.contextSize })}
-
-   Ollama: ${health.ollama}
-   Models: ${health.models?.slice(0, 5).join(', ') || 'none'}
-`);
+        await this.fetchServiceStatus();
+        console.log('');
         break;
 
       case 'clear':
       case 'c':
-        this.agent.clearContext();
-        console.log(t('commands.contextCleared') + '\n');
+        try {
+          await fetch(`http://127.0.0.1:${this.port}/api/clear`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: AbortSignal.timeout(3000)
+          });
+          console.log(t('commands.contextCleared') + '\n');
+        } catch {
+          console.log('❌ Failed to clear context\n');
+        }
         break;
 
       case 'models':
-        const env = await this.checkEnvironment();
-        if (env.models.length > 0) {
-          console.log('\n' + t('commands.availableModels'));
-          env.models.forEach(m => console.log(`   • ${m}`));
-          console.log('');
-        } else {
-          console.log('\n' + t('commands.noModelsInstalled'));
-          console.log(t('commands.installModelHint') + '\n');
+        try {
+          const ollamaHost = this.config?.ollama?.host || 'http://localhost:11434';
+          const response = await fetch(`${ollamaHost}/api/tags`, {
+            signal: AbortSignal.timeout(3000)
+          });
+          if (response.ok) {
+            const data = await response.json();
+            const models = data.models?.map(m => m.name) || [];
+            if (models.length > 0) {
+              console.log('\n' + t('commands.availableModels'));
+              models.forEach(m => console.log(`   • ${m}`));
+              console.log('');
+            } else {
+              console.log('\n' + t('commands.noModelsInstalled'));
+              console.log(t('commands.installModelHint') + '\n');
+            }
+          }
+        } catch {
+          console.log('❌ Cannot connect to Ollama\n');
         }
         break;
 
       case 'channels':
-        console.log('\n📡 Connected Channels:');
-        if (this.channels.size === 0) {
-          console.log('   No channels connected.');
-          console.log('   Run /setup to configure Telegram, Discord, or Slack.\n');
-        } else {
-          for (const [name, channel] of this.channels) {
-            const status = channel.isRunning !== false ? '✅' : '❌';
-            console.log(`   • ${name}: ${status}`);
+        try {
+          const response = await fetch(`http://127.0.0.1:${this.port}/api/status`, {
+            signal: AbortSignal.timeout(3000)
+          });
+          if (response.ok) {
+            const status = await response.json();
+            console.log('\n📡 Connected Channels:');
+            if (status.channels && Object.keys(status.channels).length > 0) {
+              for (const [name, info] of Object.entries(status.channels)) {
+                console.log(`   • ${name}: ${info.active ? '✅' : '❌'}`);
+              }
+            } else {
+              console.log('   Info not available from service.');
+              console.log('   Run /setup to configure Telegram, Discord, or Slack.');
+            }
+            console.log('');
           }
-          console.log('');
+        } catch {
+          console.log('❌ Cannot fetch channel status\n');
         }
         break;
 
@@ -506,24 +581,28 @@ ${tf('status.contextMessages', { count: status.contextSize })}
         } else {
           console.log(`\n🔍 Searching memory: "${query}"...`);
           try {
-            const { registry } = await import('./src/core/tool/tools/index.js');
-            const searchResult = await registry.execute('nmt-search', { query, topK: 5 });
-            if (searchResult?.error) {
-              console.log(`   ❌ ${searchResult.error}`);
-            } else if (searchResult?.data?.results?.length > 0) {
-              const results = searchResult.data.results;
-              console.log(`   Found ${results.length} result(s):\n`);
-              results.forEach((r, i) => {
-                const title = r.title || r.content?.substring(0, 60) || 'Untitled';
-                const score = r.score ? ` (${(r.score * 100).toFixed(0)}%)` : '';
-                console.log(`   [${i + 1}] ${title}${score}`);
-                if (r.content && r.content.length > 0) {
-                  const preview = r.content.substring(0, 100).replace(/\n/g, ' ');
-                  console.log(`       ${preview}${r.content.length > 100 ? '...' : ''}`);
-                }
-              });
+            const response = await fetch(
+              `http://127.0.0.1:${this.port}/api/memory/search?q=${encodeURIComponent(query)}&limit=5`,
+              { signal: AbortSignal.timeout(10000) }
+            );
+            if (response.ok) {
+              const data = await response.json();
+              if (data.results?.length > 0) {
+                console.log(`   Found ${data.results.length} result(s):\n`);
+                data.results.forEach((r, i) => {
+                  const title = r.title || r.content?.substring(0, 60) || 'Untitled';
+                  const score = r.score ? ` (${(r.score * 100).toFixed(0)}%)` : '';
+                  console.log(`   [${i + 1}] ${title}${score}`);
+                  if (r.content && r.content.length > 0) {
+                    const preview = r.content.substring(0, 100).replace(/\n/g, ' ');
+                    console.log(`       ${preview}${r.content.length > 100 ? '...' : ''}`);
+                  }
+                });
+              } else {
+                console.log('   No results found.');
+              }
             } else {
-              console.log('   No results found.');
+              console.log('   ❌ Memory search failed');
             }
           } catch (error) {
             console.log(`   ❌ Memory search failed: ${error.message}`);
@@ -532,11 +611,34 @@ ${tf('status.contextMessages', { count: status.contextSize })}
         }
         break;
 
+      case 'logs':
+        const logs = this.daemon.getLogs(20);
+        if (logs.length === 0) {
+          console.log('\nNo logs found.\n');
+        } else {
+          console.log('\n📋 Recent service logs:');
+          logs.forEach(l => console.log(`   ${l}`));
+          console.log('');
+        }
+        break;
+
+      case 'shutdown':
+        console.log('\n🛑 Shutting down JARVIS service...');
+        if (this.ws) this.ws.close();
+        const stopResult = await this.daemon.stop();
+        if (stopResult.success) {
+          console.log(`✅ Service stopped (PID: ${stopResult.pid})`);
+        } else {
+          console.log(`❌ ${stopResult.error}`);
+        }
+        if (this.rl) this.rl.close();
+        process.exit(0);
+
+      case 'close':
       case 'exit':
       case 'q':
       case 'quit':
-        rl.close();
-        await this.stop();
+        this.disconnect();
         return false;
 
       default:
@@ -545,6 +647,66 @@ ${tf('status.contextMessages', { count: status.contextSize })}
     }
 
     return true;
+  }
+
+  disconnect() {
+    console.log('\n👋 Chat window closed. JARVIS service is still running.');
+    console.log('   Run "jarvis" to reopen chat');
+    console.log('   Run "jarvis stop" to stop the service\n');
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+    }
+    if (this.rl) this.rl.close();
+    process.exit(0);
+  }
+
+  // ========================================
+  // UI
+  // ========================================
+
+  printBanner() {
+    console.log(`
+    ╔═══════════════════════════════════════════════════════════════════╗
+    ║                                                                   ║
+    ║   ███╗   ███╗██╗   ██╗    ██╗     ██╗████████╗████████╗██╗        ║
+    ║   ████╗ ████║╚██╗ ██╔╝    ██║     ██║╚══██╔══╝╚══██╔══╝██║        ║
+    ║   ██╔████╔██║ ╚████╔╝     ██║     ██║   ██║      ██║   ██║        ║
+    ║   ██║╚██╔╝██║  ╚██╔╝      ██║     ██║   ██║      ██║   ██║        ║
+    ║   ██║ ╚═╝ ██║   ██║       ███████╗██║   ██║      ██║   ███████╗   ║
+    ║   ╚═╝     ╚═╝   ╚═╝       ╚══════╝╚═╝   ╚═╝      ╚═╝   ╚══════╝   ║
+    ║                                                                   ║
+    ║            ╦╔═╗╦═╗╦  ╦╦╔═╗  🤖 v2.0.1                              ║
+    ║            ║╠═╣╠╦╝╚╗╔╝║╚═╗  3-Agent AI Assistant                  ║
+    ║           ╚╝╩ ╩╩╚═ ╚╝ ╩╚═╝  Ollama + Claude                       ║
+    ║                                                                   ║
+    ╚═══════════════════════════════════════════════════════════════════╝
+    `);
+  }
+
+  printHelp() {
+    console.log(`
+🤖 MyLittle JARVIS v2.0.1
+
+Usage:
+  jarvis                    Open interactive chat (auto-starts service)
+  jarvis start              Start background service
+  jarvis stop               Stop background service
+  jarvis restart            Restart background service
+  jarvis status             Show service status
+  jarvis logs               Show recent service logs
+  jarvis setup              Run setup wizard
+  jarvis --help             Show this help
+
+Service Architecture:
+  JARVIS runs as a background service (gateway + channels + AI agent).
+  The CLI chat window is just a client that connects to the service.
+  Closing the chat window does NOT stop JARVIS.
+
+  Gateway: http://127.0.0.1:${this.port}
+  PWA:     http://127.0.0.1:${this.port}/chat.html
+  Config:  ~/.jarvis/jarvis.json
+`);
   }
 
   askQuestion(question) {
@@ -559,46 +721,21 @@ ${tf('status.contextMessages', { count: status.contextSize })}
       });
     });
   }
-
-  async stop() {
-    console.log('\n' + t('shutdown.shuttingDown'));
-
-    // Stop all channels
-    for (const [name, channel] of this.channels) {
-      try {
-        if (channel.stop) await channel.stop();
-        console.log(`   ${name}: stopped`);
-      } catch (error) {
-        console.error(`   ${name}: stop failed - ${error.message}`);
-      }
-    }
-    this.channels.clear();
-
-    if (this.gateway) {
-      await this.gateway.stop();
-    }
-
-    if (this.configLoader) {
-      this.configLoader.destroy();
-    }
-
-    console.log(t('shutdown.goodbye') + '\n');
-    process.exit(0);
-  }
 }
 
 // CLI entry point
 const terminal = new JarvisTerminal();
 
-process.on('SIGINT', async () => {
-  await terminal.stop();
+// Ctrl+C: Close chat window only (service keeps running)
+process.on('SIGINT', () => {
+  terminal.disconnect();
 });
 
 process.on('uncaughtException', (error) => {
-  console.error(tf('errors.uncaughtError', { error: error.message }));
+  console.error(`❌ Uncaught error: ${error.message}`);
 });
 
 terminal.start().catch((error) => {
-  console.error(tf('errors.startFailed', { error: error.message }));
+  console.error(`❌ Start failed: ${error.message}`);
   process.exit(1);
 });
